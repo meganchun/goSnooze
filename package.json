@@ -9,14 +9,39 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/dm-sans": "^0.2.3",
+    "@expo-google-fonts/inter": "^0.2.3",
+    "@expo-google-fonts/poppins": "^0.2.3",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-native-fontawesome": "^0.3.2",
+    "@prisma/client": "^6.2.1",
+    "@react-native-vector-icons/fontawesome": "^4.7.0",
+    "@react-native-vector-icons/fontawesome6": "^6.7.1",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.23",
+    "expo-blur": "^14.0.2",
     "expo-status-bar": "~2.0.0",
+    "nativewind": "^4.1.23",
     "react": "18.3.1",
-    "react-native": "0.76.5"
+    "react-native": "0.76.5",
+    "react-native-gesture-handler": "^2.22.0",
+    "react-native-maps": "1.18.0",
+    "react-native-reanimated": "^3.16.7",
+    "react-native-safe-area-context": "^4.12.0",
+    "react-native-screens": "~4.4.0",
+    "react-native-svg": "^15.10.1",
+    "react-native-vector-icons": "^10.2.0",
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
+    "@types/react-native-vector-icons": "^6.4.18",
+    "prisma": "^6.2.1",
     "typescript": "^5.3.3"
   },
   "private": true
