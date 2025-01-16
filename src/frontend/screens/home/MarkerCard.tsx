@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import { ViewProps } from "react-native";
 import { View, TouchableOpacity, Image } from "react-native";
-import { ThemedText } from "./ThemedText";
+import { ThemedText } from "../../components/ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 export interface Props {

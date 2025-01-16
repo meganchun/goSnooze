@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Image, TouchableOpacity, ViewProps, Text } from "react-native";
-import { ThemedView } from "../components/ThemedView";
-import { ThemedText } from "../components/ThemedText";
+import { ThemedView } from "../../components/ThemedView";
+import { ThemedText } from "../../components/ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useThemeColour } from "../hooks/useThemeColour";
+import { useThemeColour } from "../../hooks/useThemeColour";
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
   darkColor?: string;
@@ -37,7 +37,7 @@ export default function SettingsScreen({
           <TouchableOpacity className="profile flex-row items-center justify-between mx-1 my-5">
             <View className="flex-row">
               <Image
-                source={require("../../../assets/snoozeLogo.png")}
+                source={require("../../../../assets/snoozeLogo.png")}
                 className="mr-4 size-16"
               />
               <View>

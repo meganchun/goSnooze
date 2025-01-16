@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import MapView, { Marker, MarkerAnimated } from "react-native-maps";
-import { ThemedView } from "../components/ThemedView";
-import { ThemedText } from "../components/ThemedText";
-import TrainLinesButtons from "../components/TrainLinesButtons";
-import MarkerCard from "../components/MarkerCard";
+import { ThemedView } from "../../components/ThemedView";
+import { ThemedText } from "../../components/ThemedText";
+import TrainLinesButtons from "./TrainLinesButtons";
+import MarkerCard from "./MarkerCard";
 import { Dimensions } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import { useThemeColour } from "../hooks/useThemeColour";
+import { useThemeColour } from "../../hooks/useThemeColour";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -140,6 +140,10 @@ export default function HomeScreen({
     return { scale };
   });
 
+  const cancelAlarm = () => {
+    setAlarmOn(!alarmOn);
+  };
+
   return (
     <ThemedView className="flex-1">
       <ThemedText type="title" className="font-bold px-6 py-4">
@@ -171,7 +175,7 @@ export default function HomeScreen({
                     >
                       <Animated.Image
                         className="w-8 h-8"
-                        source={require("../../../assets/locationPin.png")}
+                        source={require("../../../../assets/locationPin.png")}
                         resizeMode="cover"
                       />
                     </Animated.View>
@@ -197,7 +201,10 @@ export default function HomeScreen({
                   {activeStation.time}
                 </ThemedText>
               </View>
-              <TouchableOpacity className="absolute -top-4 -right-4 bg-[#FFFF] w-8 h-8 rounded-full items-center justify-center">
+              <TouchableOpacity
+                className="absolute -top-4 -right-4 bg-[#FFFF] w-8 h-8 rounded-full items-center justify-center"
+                onPress={cancelAlarm}
+              >
                 <Icon name="close" size={16} color="#0057FF" />
               </TouchableOpacity>
             </View>

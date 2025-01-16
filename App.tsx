@@ -3,6 +3,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import "@/global.css";
 import { StatusBar } from "expo-status-bar";
 import "./global.css";
 import NavBar from "./src/frontend/components/NavBar";

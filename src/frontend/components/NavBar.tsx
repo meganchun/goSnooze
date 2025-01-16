@@ -2,11 +2,12 @@ import React from "react";
 import { type ViewProps } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreen from "../screens/HomeScreen";
-import SettingsScreen from "../screens/SettingsScreen";
+import HomeScreen from "../screens/home/HomeScreen";
+import SettingsScreen from "../screens/settings/SettingsScreen";
 import AlertsScreen from "../screens/AlertsScreen";
 import { useThemeColour } from "../hooks/useThemeColour";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import SignUpScreen from "../screens/auth/SignUpScreen";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -60,6 +61,7 @@ export default function NavBar({
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Alerts" component={AlertsScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
+        <Tab.Screen name="Sign Up" component={SignUpScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

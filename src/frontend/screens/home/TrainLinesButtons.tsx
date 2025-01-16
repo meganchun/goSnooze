@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react";
-import {
-  ScrollView,
-  TouchableOpacity,
-  type ViewProps,
-} from "react-native";
-import { ThemedText } from "./ThemedText";
-import { useThemeColour } from "../hooks/useThemeColour";
+import { ScrollView, TouchableOpacity, type ViewProps } from "react-native";
+import { ThemedText } from "../../components/ThemedText";
+import { useThemeColour } from "../../hooks/useThemeColour";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;

@@ -2,7 +2,6 @@ import React from "react";
 import { View } from "react-native";
 import { ThemedView } from "../components/ThemedView";
 import { ThemedText } from "../components/ThemedText";
-import MapView from "react-native-maps";
 
 export default function AlertsScreen() {
   return (
