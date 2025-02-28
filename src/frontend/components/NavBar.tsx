@@ -45,6 +45,8 @@ export default function NavBar({
               return <Icon name="home" size={26} color={color} />;
             } else if (route.name === "Alerts") {
               return <Icon name="notifications" size={26} color={color} />;
+            } else if (route.name === "Alerts") {
+              return <Icon name="notifications" size={26} color={color} />;
             } else return <Icon name="settings" size={26} color={color} />;
           },
           tabBarActiveTintColor: selectedIconColour,

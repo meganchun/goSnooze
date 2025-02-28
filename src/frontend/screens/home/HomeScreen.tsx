@@ -10,11 +10,13 @@ import {
 import MapView, { Marker, MarkerAnimated } from "react-native-maps";
 import { ThemedView } from "../../components/ThemedView";
 import { ThemedText } from "../../components/ThemedText";
-import TrainLinesButtons from "./TrainLinesButtons";
-import MarkerCard from "./MarkerCard";
+import TrainLinesButtons from "../../components/homepage/TrainLinesButtons";
+import MarkerCard from "../../components/homepage/MarkerCard";
 import { Dimensions } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
 import { useThemeColour } from "../../hooks/useThemeColour";
+import { Line, Stop } from "../../types/transitTypes";
+import AlarmCard from "../../components/homepage/AlarmCard";
+import { getStopsOnLine, getStopDetails } from "../../services/transitService";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -46,12 +48,11 @@ export default function HomeScreen({
 
   const name = "Megan";
 
-  // Alarm data
-  const [alarmOn, setAlarmOn] = useState(true);
-  const [activeStation, setActiveStation] = useState({
-    name: "Union Station",
-    time: "5:30PM EST",
-  });
+  const [alarmOn, setAlarmOn] = useState(false);
+  const [activeLine, setActiveLine] = useState<Line | null>(null);
+  const [stopCodes, setStopCodes] = useState<string[] | null>(null);
+  const [markers, setMarkers] = useState<Stop[]>([]);
+  const [activeStation, setActiveStation] = useState<Stop | null>(null);
 
   // TO DO: Get users location and set region as that
   const [region, setRegion] = useState({
@@ -61,46 +62,11 @@ export default function HomeScreen({
     longitudeDelta: 0.0421,
   });
 
-  // TO DO: Get markers of station
-  const [markers, setMarkers] = useState([
-    {
-      latitude: 43.6426,
-      longitude: -79.3871,
-      stopName: "Union",
-      streetNumber: 1,
-      streetName: "King Street",
-      index: 1,
-    },
-    {
-      latitude: 43.6451991,
-      longitude: -79.3837245,
-      stopName: "Test",
-      streetNumber: 1,
-      streetName: "King Street",
-      index: 2,
-    },
-    {
-      latitude: 43.656707763671875,
-      longitude: -79.37975311279297,
-      stopName: "Test",
-      streetNumber: 1,
-      streetName: "King Street",
-      index: 3,
-    },
-    {
-      latitude: 43.7080726,
-      longitude: -79.3483886,
-      stopName: "Test",
-      streetNumber: 1,
-      streetName: "King Street",
-      index: 4,
-    },
-  ]);
-
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
   const mapRef = useRef<MapView>(null);
 
+  // Animation to markers
   useEffect(() => {
     const listener = mapAnimation.current.addListener(({ value }) => {
       // Determine active marker
@@ -109,8 +75,8 @@ export default function HomeScreen({
         const coordinate = markers[index];
         mapRef.current.animateToRegion(
           {
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude,
+            latitude: coordinate.Latitude,
+            longitude: coordinate.Longitude,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
           },
@@ -123,6 +89,29 @@ export default function HomeScreen({
       mapAnimation.current.removeListener(listener);
     };
   }, [markers, windowWidth]);
+
+  // Animation to show all lines
+  useEffect(() => {
+    if (markers.length > 0 && mapRef.current) {
+      const latitudes = markers.map((marker) => marker.Latitude);
+      const longitudes = markers.map((marker) => marker.Longitude);
+
+      const minLat = Math.min(...latitudes);
+      const maxLat = Math.max(...latitudes);
+      const minLon = Math.min(...longitudes);
+      const maxLon = Math.max(...longitudes);
+
+      const padding = 0.05;
+      const region = {
+        latitude: (minLat + maxLat) / 2,
+        longitude: (minLon + maxLon) / 2,
+        latitudeDelta: maxLat - minLat + padding,
+        longitudeDelta: maxLon - minLon + padding,
+      };
+
+      mapRef.current.animateToRegion(region, 500);
+    }
+  }, [markers]);
 
   const interpolations = markers.map((marker, index) => {
     const inputRange = [
@@ -140,8 +129,61 @@ export default function HomeScreen({
     return { scale };
   });
 
+  // Fetch stops
+  useEffect(() => {
+    const fetchStops = async () => {
+      if (activeLine) {
+        try {
+          const fetchedStops = await getStopsOnLine(
+            activeLine.Code,
+            activeLine.Variant[0].Direction
+          );
+          setStopCodes(fetchedStops.Lines.Stop.map((stop: any) => stop.Code));
+        } catch (error) {}
+      }
+    };
+
+    fetchStops();
+  }, [activeLine]);
+
+  // Fetch stop details
+  useEffect(() => {
+    const fetchStopDetails = async () => {
+      if (stopCodes && stopCodes.length > 0) {
+        try {
+          const stopDetails: Stop[] = await Promise.all(
+            stopCodes.map(async (stop) => {
+              const fetchedDetails = await getStopDetails(stop);
+
+              const stopInfo: Stop = {
+                Code: fetchedDetails.Stop.Code,
+                StreetNumber: fetchedDetails.Stop.StreetNumber,
+                Intersection: fetchedDetails.Stop.Intersection,
+                City: fetchedDetails.Stop.City,
+                StreetName: fetchedDetails.Stop.StreetName,
+                StopName: fetchedDetails.Stop.StopName,
+                Longitude: fetchedDetails.Stop.Longitude,
+                Latitude: fetchedDetails.Stop.Latitude,
+              };
+              return stopInfo;
+            })
+          );
+          setMarkers(stopDetails);
+        } catch (error) {
+          console.error("Error fetching stop details:", error);
+        }
+      }
+    };
+    fetchStopDetails();
+  }, [stopCodes]);
+
   const cancelAlarm = () => {
     setAlarmOn(!alarmOn);
+  };
+
+  const handleNotify = (stop: Stop) => {
+    setActiveStation(stop);
+    setAlarmOn(true);
   };
 
   return (
@@ -151,7 +193,7 @@ export default function HomeScreen({
       </ThemedText>
       <View className="flex-1 mx-6">
         <View className="h-10px flex-row ">
-          <TrainLinesButtons />
+          <TrainLinesButtons setActiveLine={setActiveLine} />
         </View>
         <View className="overflow-hidden rounded-2xl my-4 flex-1 relative">
           <MapView style={{ flex: 1 }} initialRegion={region} ref={mapRef}>
@@ -163,8 +205,8 @@ export default function HomeScreen({
                   <MarkerAnimated
                     key={index}
                     coordinate={{
-                      longitude: stop.longitude,
-                      latitude: stop.latitude,
+                      longitude: stop.Longitude,
+                      latitude: stop.Latitude,
                     }}
                   >
                     <Animated.View
@@ -184,30 +226,12 @@ export default function HomeScreen({
               })}
           </MapView>
 
-          {/* Alarm set modal */}
-          {alarmOn && (
-            <View className="flex-row bg-[#0057FF] w-[80vw] absolute rounded bottom-0 m-[5vw] p-5 justify-between">
-              <View className="arrival-station flex-1">
-                <ThemedText type="description_light">Alarm set for:</ThemedText>
-                <ThemedText type="subtitle_light">
-                  {activeStation.name}
-                </ThemedText>
-              </View>
-              <View className="arrival-time flex-1">
-                <ThemedText type="description_light">
-                  Estimated time of arrival:
-                </ThemedText>
-                <ThemedText type="subtitle_light">
-                  {activeStation.time}
-                </ThemedText>
-              </View>
-              <TouchableOpacity
-                className="absolute -top-4 -right-4 bg-[#FFFF] w-8 h-8 rounded-full items-center justify-center"
-                onPress={cancelAlarm}
-              >
-                <Icon name="close" size={16} color="#0057FF" />
-              </TouchableOpacity>
-            </View>
+          {/* Alarm set card */}
+          {alarmOn && activeStation && (
+            <AlarmCard
+              activeStation={activeStation}
+              cancelAlarm={cancelAlarm}
+            />
           )}
 
           {/* Stop marker cards */}
@@ -233,7 +257,11 @@ export default function HomeScreen({
               )}
             >
               {markers.map((marker, index) => (
-                <MarkerCard key={index} stop={marker}></MarkerCard>
+                <MarkerCard
+                  key={index}
+                  stop={marker}
+                  handleNotify={handleNotify}
+                ></MarkerCard>
               ))}
             </Animated.ScrollView>
           )}

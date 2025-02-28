@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     lineHeight: 32,
+    letterSpacing: -1,
     fontFamily: "DMSans_700Bold",
   },
   subtitle: {
