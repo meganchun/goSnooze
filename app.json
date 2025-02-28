@@ -12,8 +12,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow GoSnooze to use your location."
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need access to your location to provide live tracking.",
+        "NSLocationAlwaysUsageDescription": "We need access to your location even when the app is in the background."
+      }
     },
     "android": {
       "adaptiveIcon": {

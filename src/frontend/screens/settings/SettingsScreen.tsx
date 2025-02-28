@@ -47,12 +47,12 @@ export default function SettingsScreen({
             </View>
             <Icon name="keyboard-arrow-right" size={24} color={textColour} />
           </TouchableOpacity>
-          <ThemedText type="subtitle" className="font-bold my-4 mb-8">
+          <ThemedText type="subtitle" className="font-bold my-4 mb-6">
             Account Settings
           </ThemedText>
           {settingSubTabs.map((tab, index) => (
-            <TouchableOpacity key={index} className="mb-8 mx-1">
-              <View className="flex-row mb-8 justify-between items-center">
+            <TouchableOpacity key={index} className="mb-6 mx-1">
+              <View className="flex-row mb-6 justify-between items-center">
                 <View className="flex-row items-center ">
                   <Icon
                     name={tab.icon}

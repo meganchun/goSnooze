@@ -6,6 +6,7 @@ import {
   Text,
   type ViewProps,
   TouchableOpacity,
+  Switch,
 } from "react-native";
 import MapView, { Marker, MarkerAnimated } from "react-native-maps";
 import { ThemedView } from "../../components/ThemedView";
@@ -17,6 +18,7 @@ import { useThemeColour } from "../../hooks/useThemeColour";
 import { Line, Stop } from "../../types/transitTypes";
 import AlarmCard from "../../components/homepage/AlarmCard";
 import { getStopsOnLine, getStopDetails } from "../../services/transitService";
+import { useLocation } from "../../context/LocationContext";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -46,21 +48,19 @@ export default function HomeScreen({
   );
   const windowWidth = Dimensions.get("window").width;
 
-  const name = "Megan";
-
   const [alarmOn, setAlarmOn] = useState(false);
   const [activeLine, setActiveLine] = useState<Line | null>(null);
   const [stopCodes, setStopCodes] = useState<string[] | null>(null);
   const [markers, setMarkers] = useState<Stop[]>([]);
   const [activeStation, setActiveStation] = useState<Stop | null>(null);
+  const [isTrain, setIsTrain] = useState(true);
 
-  // TO DO: Get users location and set region as that
-  const [region, setRegion] = useState({
-    latitude: 43.6426,
-    longitude: -79.3871,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const { location, error } = useLocation();
+
+  const tempUser = {
+    name: "Megan",
+    number: "",
+  };
 
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
@@ -112,6 +112,20 @@ export default function HomeScreen({
       mapRef.current.animateToRegion(region, 500);
     }
   }, [markers]);
+
+  // Animate to users location
+  useEffect(() => {
+    if (location && mapRef.current) {
+      const region = {
+        latitude: location?.coords.latitude,
+        longitude: location?.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+
+      mapRef.current.animateToRegion(region, 500);
+    }
+  }, [location]);
 
   const interpolations = markers.map((marker, index) => {
     const inputRange = [
@@ -186,17 +200,22 @@ export default function HomeScreen({
     setAlarmOn(true);
   };
 
+  const toggleSwitch = () => setIsTrain((previousState) => !previousState);
+
   return (
     <ThemedView className="flex-1">
-      <ThemedText type="title" className="font-bold px-6 py-4">
-        Go snooze, {name}
-      </ThemedText>
+      <ThemedView className="flex flex-row justify-space-between items-center text-center">
+        <ThemedText type="title" className="font-bold px-6 py-4">
+          Go snooze, {tempUser.name}
+        </ThemedText>
+      </ThemedView>
+
       <View className="flex-1 mx-6">
         <View className="h-10px flex-row ">
           <TrainLinesButtons setActiveLine={setActiveLine} />
         </View>
         <View className="overflow-hidden rounded-2xl my-4 flex-1 relative">
-          <MapView style={{ flex: 1 }} initialRegion={region} ref={mapRef}>
+          <MapView style={{ flex: 1 }} ref={mapRef}>
             {markers &&
               markers.map((stop, index) => {
                 const scale = interpolations[index].scale;
@@ -224,6 +243,14 @@ export default function HomeScreen({
                   </MarkerAnimated>
                 );
               })}
+            {location && (
+              <Marker
+                coordinate={{
+                  longitude: location.coords.longitude,
+                  latitude: location.coords.latitude,
+                }}
+              ></Marker>
+            )}
           </MapView>
 
           {/* Alarm set card */}

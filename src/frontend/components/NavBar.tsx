@@ -4,7 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/home/HomeScreen";
 import SettingsScreen from "../screens/settings/SettingsScreen";
-import AlertsScreen from "../screens/AlertsScreen";
+import AlertsScreen from "../screens/alerts/AlertsScreen";
 import { useThemeColour } from "../hooks/useThemeColour";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import SignUpScreen from "../screens/auth/SignUpScreen";

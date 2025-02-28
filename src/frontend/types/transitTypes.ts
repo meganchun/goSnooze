@@ -20,3 +20,9 @@ export type Stop = {
   Longitude: number;
   Latitude: number;
 };
+export type Alert = {
+  title: string;
+  message: string;
+  category: string;
+  date: string;
+};

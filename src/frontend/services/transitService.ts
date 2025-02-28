@@ -5,6 +5,7 @@ import {
   TRAIN_LINES,
   LINE_STOPS,
   STOP_INFO,
+  SERVICE_ALERTS,
 } from "@env";
 import dayjs from "dayjs";
 
@@ -46,6 +47,17 @@ export const getStopsOnLine = async (lineCode: string, direction: string) => {
 export const getStopDetails = async (stopCode: string) => {
   try {
     const response = await api.get(`${STOP_INFO}/${stopCode}${API_KEY}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching stop details:", error);
+    throw error;
+  }
+};
+
+// Get service alerts
+export const getAlerts = async () => {
+  try {
+    const response = await api.get(`${SERVICE_ALERTS}${API_KEY}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching stop details:", error);

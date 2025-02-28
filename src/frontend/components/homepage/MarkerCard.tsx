@@ -4,6 +4,7 @@ import { View, TouchableOpacity, Image } from "react-native";
 import { ThemedText } from "../ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Stop } from "../../types/transitTypes";
+import { Alert } from "react-native";
 
 export interface Props {
   stop: Stop;
@@ -11,6 +12,24 @@ export interface Props {
 }
 
 export default function MarkerCard({ stop, handleNotify }: Props) {
+  const confirmNotify = () => {
+    Alert.alert(
+      "Confirm Notification",
+      `Are you sure you want to be notified when you're near ${stop.StopName}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: () => handleNotify(stop),
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   return (
     <BlurView
       key={stop.StopName}
@@ -25,7 +44,7 @@ export default function MarkerCard({ stop, handleNotify }: Props) {
       </View>
       <View className="flex-2">
         <TouchableOpacity
-          onPress={() => handleNotify(stop)}
+          onPress={confirmNotify}
           className="border border-[#0057FF] py-1 rounded flex-row items-center"
         >
           <Icon
