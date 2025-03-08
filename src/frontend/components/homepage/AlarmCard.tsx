@@ -22,14 +22,14 @@ export default function AlarmCard({ activeStation, cancelAlarm }: Props) {
         },
         {
           text: "OK",
-          onPress: () => cancelAlarm,
+          onPress: cancelAlarm,
         },
       ],
       { cancelable: false }
     );
   };
   return (
-    <View className="flex-row bg-[#0057FF] w-[80vw] absolute rounded bottom-0 m-[5vw] p-5 justify-between">
+    <View className="flex-row bg-[#0057FF] w-[80vw] absolute rounded bottom-0 m-[5vw] p-5 justify-between gap-2">
       <View className="arrival-station flex-1">
         <ThemedText type="description_light">Alarm set for:</ThemedText>
         <ThemedText type="subtitle_light">{activeStation.StopName}</ThemedText>

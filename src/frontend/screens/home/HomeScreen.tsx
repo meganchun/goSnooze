@@ -19,6 +19,7 @@ import { Line, Stop } from "../../types/transitTypes";
 import AlarmCard from "../../components/homepage/AlarmCard";
 import { getStopsOnLine, getStopDetails } from "../../services/transitService";
 import { useLocation } from "../../context/LocationContext";
+import { calculateDistance } from "../../services/distanceService";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -124,6 +125,24 @@ export default function HomeScreen({
       };
 
       mapRef.current.animateToRegion(region, 500);
+    }
+    // If the user set a location stop
+    if (alarmOn && location && activeStation) {
+      // Check if it enters within a 5km radius
+      if (
+        calculateDistance(
+          {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+          {
+            longitude: activeStation.Longitude,
+            latitude: activeStation.Latitude,
+          }
+        ) < 5
+      ) {
+        console.log(true);
+      }
     }
   }, [location]);
 

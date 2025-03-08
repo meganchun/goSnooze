@@ -51,8 +51,8 @@ export default function AlertsScreen({
         </ThemedText>
         <ScrollView className="overflow-hidden mx-10 my-4 flex-1 relative">
           {alerts &&
-            alerts.map((alert) => (
-              <View className="flex flex-col mb-8 gap-6">
+            alerts.map((alert, index) => (
+              <View key={index} className="flex flex-col mb-8 gap-6">
                 <AlertMessage alert={alert} />
                 <View className={`flex h-0 w-full border-[0.5px]`} />
               </View>
