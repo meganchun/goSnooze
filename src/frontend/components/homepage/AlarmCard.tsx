@@ -1,7 +1,5 @@
 import React from "react";
 import { View, TouchableOpacity, Alert } from "react-native";
-import MapView, { Marker, MarkerAnimated } from "react-native-maps";
-import { ThemedView } from "../../components/ThemedView";
 import { ThemedText } from "../../components/ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Stop } from "../../types/transitTypes";

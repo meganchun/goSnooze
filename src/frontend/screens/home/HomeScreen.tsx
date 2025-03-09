@@ -20,6 +20,7 @@ import AlarmCard from "../../components/homepage/AlarmCard";
 import { getStopsOnLine, getStopDetails } from "../../services/transitService";
 import { useLocation } from "../../context/LocationContext";
 import { calculateDistance } from "../../services/distanceService";
+import ToggleSwitch from "../../components/homepage/ToggleSwitch";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -91,7 +92,7 @@ export default function HomeScreen({
     };
   }, [markers, windowWidth]);
 
-  // Animation to show all lines
+  // Animation to show all stops
   useEffect(() => {
     if (markers.length > 0 && mapRef.current) {
       const latitudes = markers.map((marker) => marker.Latitude);
@@ -102,7 +103,7 @@ export default function HomeScreen({
       const minLon = Math.min(...longitudes);
       const maxLon = Math.max(...longitudes);
 
-      const padding = 0.05;
+      const padding = 0.1;
       const region = {
         latitude: (minLat + maxLat) / 2,
         longitude: (minLon + maxLon) / 2,
@@ -219,19 +220,25 @@ export default function HomeScreen({
     setAlarmOn(true);
   };
 
-  const toggleSwitch = () => setIsTrain((previousState) => !previousState);
-
+  const [mode, setMode] = useState<"train" | "bus">("train");
   return (
     <ThemedView className="flex-1">
       <ThemedView className="flex flex-row justify-space-between items-center text-center">
-        <ThemedText type="title" className="font-bold px-6 py-4">
+        <ThemedText type="title" className="font-bold px-6 py-2">
           Go snooze, {tempUser.name}
         </ThemedText>
       </ThemedView>
 
       <View className="flex-1 mx-6">
-        <View className="h-10px flex-row ">
-          <TrainLinesButtons setActiveLine={setActiveLine} />
+        <View className="flex flex-col gap-2">
+          <View className="flex flex-row justify-between items-center">
+            <ThemedText className="w-1/2 mx-2" type="defaultBold">
+              Select your trip
+            </ThemedText>
+            <View></View>
+            <ToggleSwitch className="px-2" mode={mode} setMode={setMode} />
+          </View>
+          <TrainLinesButtons setActiveLine={setActiveLine} mode={mode} />
         </View>
         <View className="overflow-hidden rounded-2xl my-4 flex-1 relative">
           <MapView style={{ flex: 1 }} ref={mapRef}>
