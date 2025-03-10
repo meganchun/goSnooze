@@ -1,5 +1,5 @@
 import { Text, type TextProps, StyleSheet } from "react-native";
-import { useThemeColour } from "../hooks/useThemeColour";
+import { useThemeColour } from "../../hooks/useThemeColour";
 import { useFonts } from "expo-font";
 import {
   DMSans_400Regular,
@@ -12,6 +12,7 @@ export type ThemedTextProps = TextProps & {
   type?:
     | "default"
     | "defaultBold"
+    | "defaultHeavy"
     | "description"
     | "title"
     | "subtitle"
@@ -48,6 +49,7 @@ export function ThemedText({
         { color },
         type === "default" ? styles.default : undefined,
         type === "defaultBold" ? styles.defaultBold : undefined,
+        type === "defaultHeavy" ? styles.defaultHeavy : undefined,
         type === "description" ? styles.description : undefined,
         type === "title" ? styles.title : undefined,
         type === "subtitle" ? styles.subtitle : undefined,
@@ -84,6 +86,11 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontFamily: "DMSans_500Medium",
   },
+  defaultHeavy: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontFamily: "DMSans_700Bold",
+  },
   title: {
     fontSize: 32,
     lineHeight: 32,
@@ -105,5 +112,6 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 16,
     color: "#0057FF",
+    fontFamily: "DMSans_500Medium",
   },
 });

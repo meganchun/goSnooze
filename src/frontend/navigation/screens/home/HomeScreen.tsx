@@ -3,24 +3,24 @@ import { BlurView } from "expo-blur";
 import {
   View,
   Animated,
-  Text,
   type ViewProps,
-  TouchableOpacity,
-  Switch,
 } from "react-native";
 import MapView, { Marker, MarkerAnimated } from "react-native-maps";
-import { ThemedView } from "../../components/ThemedView";
-import { ThemedText } from "../../components/ThemedText";
-import TrainLinesButtons from "../../components/homepage/TrainLinesButtons";
-import MarkerCard from "../../components/homepage/MarkerCard";
+import { ThemedView } from "../../../components/common/ThemedView";
+import { ThemedText } from "../../../components/common/ThemedText";
+import TrainLinesButtons from "../../../components/homepage/TrainLinesButtons";
+import MarkerCard from "../../../components/homepage/MarkerCard";
 import { Dimensions } from "react-native";
-import { useThemeColour } from "../../hooks/useThemeColour";
-import { Line, Stop } from "../../types/transitTypes";
-import AlarmCard from "../../components/homepage/AlarmCard";
-import { getStopsOnLine, getStopDetails } from "../../services/transitService";
-import { useLocation } from "../../context/LocationContext";
-import { calculateDistance } from "../../services/distanceService";
-import ToggleSwitch from "../../components/homepage/ToggleSwitch";
+import { useThemeColour } from "../../../hooks/useThemeColour";
+import { Line, Stop } from "../../../types/transitTypes";
+import AlarmCard from "../../../components/homepage/AlarmCard";
+import {
+  getStopsOnLine,
+  getStopDetails,
+} from "../../../services/transitService";
+import { useLocation } from "../../../context/LocationContext";
+import { calculateDistance } from "../../../services/distanceService";
+import ToggleSwitch from "../../../components/homepage/ToggleSwitch";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -235,7 +235,6 @@ export default function HomeScreen({
             <ThemedText className="w-1/2 mx-2" type="defaultBold">
               Select your trip
             </ThemedText>
-            <View></View>
             <ToggleSwitch className="px-2" mode={mode} setMode={setMode} />
           </View>
           <TrainLinesButtons setActiveLine={setActiveLine} mode={mode} />
@@ -262,7 +261,7 @@ export default function HomeScreen({
                     >
                       <Animated.Image
                         className="w-8 h-8"
-                        source={require("../../../../assets/locationPin.png")}
+                        source={require("../../../../../assets/locationPin.png")}
                         resizeMode="cover"
                       />
                     </Animated.View>

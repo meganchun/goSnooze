@@ -16,27 +16,9 @@ datasource db {
 model User {
   id              Int          @id @default(autoincrement())
   email           String       @unique
-  password        String
   firstName       String
   lastName        String
   number          String       @unique
   profilePicture  String?
   createdAt       DateTime     @default(now())
-}
-
-model TrainLine {
-  id              Int          @id @default(autoincrement())
-  name            String
-  stops           TrainStop[]   
-}
-
-model TrainStop {
-  id              Int          @id @default(autoincrement())
-  name            String
-  addressNumber   Int
-  addressStreet   String
-  longitude       Float
-  latitude        Float
-  trainId         Int    
-  train           TrainLine    @relation(fields: [trainId], references: [id])
 }

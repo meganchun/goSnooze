@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, type ViewProps } from "react-native";
-import { ThemedText } from "../ThemedText";
+import { ScrollView, type ViewProps } from "react-native";
 import { useThemeColour } from "../../hooks/useThemeColour";
 import { getLines } from "@/src/frontend/services/transitService";
 import { Line } from "@/src/frontend/types/transitTypes";
+import { ThemedButton } from "../common/ThemedButton";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -46,20 +46,16 @@ export default function TrainLinesButtons({
   return (
     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
       {lines &&
-        lines.map((line, index) => (
-          <TouchableOpacity
-            style={{
-              backgroundColor:
-                selectedButton == line.Code ? selectedIconColour : "#D9D9D9",
-            }}
-            className="mx-2 py-2 px-4 rounded"
-            key={index}
+        lines.map((line) => (
+          <ThemedButton
+            className="mx-2"
+            type={selectedButton === line.Code ? "primary" : "disabled"}
             onPress={() => {
               setActiveLine(line), setSelectedButton(line.Code);
             }}
           >
-            <ThemedText style={{ color: "#fff" }}>{line.Name}</ThemedText>
-          </TouchableOpacity>
+            {line.Name}
+          </ThemedButton>
         ))}
     </ScrollView>
   );

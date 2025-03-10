@@ -1,8 +1,8 @@
 import React from "react";
 import { Alert } from "../../types/transitTypes";
 import { View, ViewProps } from "react-native";
-import { ThemedText } from "../ThemedText";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import { ThemedText } from "../common/ThemedText";
+import Icon from "react-native-vector-icons/Ionicons";
 import IconChevron from "react-native-vector-icons/Octicons";
 import { useThemeColour } from "../../hooks/useThemeColour";
 
@@ -24,8 +24,20 @@ export default function AlertMessage({
     <View className="flex flex-wrap w-full gap-2">
       <View className="flex flex-row gap-5 justify-between items-start w-full">
         <View className="flex flex-row gap-2 flex-shrink">
-          <View className={`bg-[${iconColor}] w-auto aspect-square p-2 rounded-sm`}>
-            <Icon name="train" size={16} color="white" />
+          <View
+            className={`bg-[${iconColor}] w-auto aspect-square p-2 rounded-sm`}
+          >
+            <Icon
+              name={
+                alert.category === "Amenity"
+                  ? "business"
+                  : alert.category === "Service Disruption"
+                  ? "business"
+                  : "information-circle-sharp"
+              }
+              size={16}
+              color="white"
+            />
           </View>
           <ThemedText type="defaultBold">{alert.title}</ThemedText>
         </View>
@@ -34,10 +46,7 @@ export default function AlertMessage({
         </ThemedText>
       </View>
       <View className="flex flex-row w-full justify-between max-h-16 overflow-ellipsis">
-        <ThemedText
-          type="description"
-          className="flex flex-wrap w-[90%]"
-        >
+        <ThemedText type="description" className="flex flex-wrap w-[90%]">
           {alert.message}
         </ThemedText>
         <IconChevron name="chevron-down" />

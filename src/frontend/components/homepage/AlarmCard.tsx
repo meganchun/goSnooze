@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, Alert } from "react-native";
-import { ThemedText } from "../../components/ThemedText";
+import { ThemedText } from "../common/ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { Stop } from "../../types/transitTypes";
 

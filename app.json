@@ -18,7 +18,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow GoSnooze to use your location."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "ios": {
       "supportsTablet": true,
