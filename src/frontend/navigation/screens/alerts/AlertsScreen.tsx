@@ -45,6 +45,13 @@ export default function AlertsScreen({
     fetchLines();
   }, []);
 
+  // Set default filters to all selected
+  useEffect(() => {
+    if (alerts) {
+      setSelectedFilters([...new Set(alerts.map((alert) => alert.category))]);
+    }
+  }, [alerts]);
+
   return (
     <ScrollView>
       <ThemedView className="flex-1">

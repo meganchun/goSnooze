@@ -1,18 +1,22 @@
 import React from "react";
 import { type ViewProps } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../../navigation/screens/home/HomeScreen";
 import SettingsScreen from "../../navigation/screens/settings/SettingsScreen";
 import AlertsScreen from "../../navigation/screens/alerts/AlertsScreen";
 import { useThemeColour } from "../../hooks/useThemeColour";
-import Icon from "react-native-vector-icons/MaterialIcons";
-import SignUpScreen from "../../navigation/screens/auth/SignUpScreen";
+import SettingIcon from "react-native-vector-icons/MaterialIcons";
+import HouseIcon from "react-native-vector-icons/FontAwesome6";
+import BellIcon from "react-native-vector-icons/Ionicons";
+import PhoneNumberScreen from "../../navigation/screens/auth/accountCreation/PhoneNumberScreen";
+import OTPScreen from "../../navigation/screens/auth/accountCreation/OTPScreen";
+import ProfileDetailsScreen from "../../navigation/screens/auth/accountCreation/ProfileDetailsScreen";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
   darkColor?: string;
 };
+
 const Tab = createBottomTabNavigator();
 
 export default function NavBar({
@@ -38,10 +42,10 @@ export default function NavBar({
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           if (route.name === "Home") {
-            return <Icon name="home" size={26} color={color} />;
+            return <HouseIcon name="house" size={20} color={color} />;
           } else if (route.name === "Alerts") {
-            return <Icon name="notifications" size={26} color={color} />;
-          } else return <Icon name="settings" size={26} color={color} />;
+            return <BellIcon name="notifications" size={24} color={color} />;
+          } else return <SettingIcon name="settings" size={26} color={color} />;
         },
         tabBarActiveTintColor: selectedIconColour,
         tabBarInactiveTintColor: unselectedIconColour,
@@ -57,7 +61,7 @@ export default function NavBar({
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Alerts" component={AlertsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
-      <Tab.Screen name="Sign Up" component={SignUpScreen} />
+      <Tab.Screen name="test" component={ProfileDetailsScreen} />
     </Tab.Navigator>
   );
 }

@@ -3,6 +3,7 @@ import { View, Image, TouchableOpacity, ViewProps, Text } from "react-native";
 import { ThemedView } from "../../../components/common/ThemedView";
 import { ThemedText } from "../../../components/common/ThemedText";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import ChevronRightIcon from "react-native-vector-icons/FontAwesome6";
 import { useThemeColour } from "../../../hooks/useThemeColour";
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -45,7 +46,11 @@ export default function SettingsScreen({
                 <ThemedText>Show profile</ThemedText>
               </View>
             </View>
-            <Icon name="keyboard-arrow-right" size={24} color={textColour} />
+            <ChevronRightIcon
+              name="chevron-right"
+              size={14}
+              color={textColour}
+            />
           </TouchableOpacity>
           <ThemedText type="subtitle" className="font-bold my-4 mb-6">
             Account Settings
@@ -66,11 +71,11 @@ export default function SettingsScreen({
                     {tab.title}
                   </ThemedText>
                 </View>
-                <Icon
-                  name="keyboard-arrow-right"
-                  size={24}
-                  color={textColour}
-                />
+                <ChevronRightIcon
+              name="chevron-right"
+              size={14}
+              color={textColour}
+            />
               </View>
               <View
                 className={`divider-line border-[0.35px] border-[${textColour}]`}

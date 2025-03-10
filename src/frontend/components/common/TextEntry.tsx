@@ -44,6 +44,7 @@ interface Props {
     | "password"
     | "newPassword"
     | "oneTimeCode";
+  maxLength?: number;
 }
 
 export default function TextEntry({
@@ -53,10 +54,11 @@ export default function TextEntry({
   placeholder,
   keyboardType,
   textContentType,
+  maxLength,
 }: Props) {
   return (
     <TextInput
-      className="border border-[#D9D9D9] p-4 rounded"
+      className="border border-[#D9D9D9] rounded"
       returnKeyType="next"
       value={value}
       placeholder={placeholder}
@@ -64,6 +66,14 @@ export default function TextEntry({
       autoCapitalize="none"
       textContentType={textContentType}
       keyboardType={keyboardType}
+      maxLength={maxLength}
+      style={{
+        width: textContentType === "oneTimeCode" ? 36 : "auto",
+        height: textContentType === "oneTimeCode" ? 48 : "auto",
+        paddingHorizontal: textContentType === "oneTimeCode" ? 0 : 10,
+        paddingVertical: textContentType === "oneTimeCode" ? 0 : 14,
+        textAlign: textContentType === "oneTimeCode" ? "center" : "left",
+      }}
     />
   );
 }

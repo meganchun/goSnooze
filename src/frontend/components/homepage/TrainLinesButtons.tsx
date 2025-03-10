@@ -46,8 +46,9 @@ export default function TrainLinesButtons({
   return (
     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
       {lines &&
-        lines.map((line) => (
+        lines.map((line, index) => (
           <ThemedButton
+            key={index}
             className="mx-2"
             type={selectedButton === line.Code ? "primary" : "disabled"}
             onPress={() => {
