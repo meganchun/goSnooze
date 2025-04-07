@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState } from "react";
 import { User } from "../types/userTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../navigation/MainNavigation";
 
 interface AuthContextType {
   login: (userData: User, token: string) => void;
@@ -19,41 +22,43 @@ interface AuthContextType {
   setUser: (user: User) => void;
 }
 
+type AuthNavigationProp = StackNavigationProp<RootStackParamList>;
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const navigation = useNavigation<AuthNavigationProp>();
+
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("userData");
       await SecureStore.deleteItemAsync("userToken");
-
-      setUser(null);
-      setIsAuthenticated(false);
-      //navigation.navigate("Login");
+      await setUser(null);
+      await setIsAuthenticated(false);
     } catch (error) {
       console.error("Logout error:", error);
+    } finally {
+      navigation.navigate("Login");
     }
   };
 
   const login = async (userData: User, token: string) => {
     try {
-      // Save user data and token securely
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       await SecureStore.setItemAsync("userToken", token);
-
-      setUser(userData);
-      setIsAuthenticated(true);
-      //  navigation.navigate("Home");
+      await setUser(userData);
+      await setIsAuthenticated(true);
     } catch (error) {
       console.error("Login error:", error);
+    } finally {
+      navigation.navigate("Main");
     }
   };
 

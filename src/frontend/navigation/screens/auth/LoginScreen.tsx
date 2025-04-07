@@ -1,24 +1,73 @@
-import React, { useState } from "react";
-import {
-  View,
-  Image,
-  TextInput,
-  Button,
-  TouchableOpacity,
-  Text,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Image, TouchableOpacity, Text } from "react-native";
 import { ThemedView } from "../../../components/common/ThemedView";
 import { ThemedText } from "../../../components/common/ThemedText";
 import TextEntry from "@/src/frontend/components/common/TextEntry";
 import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import {
+  auth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+} from "@/src/backend/firebase";
+import { useAuth } from "@/src/frontend/context/AuthContext";
+import { User } from "@/src/frontend/types/userTypes";
+
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen() {
   const [email, setEmail] = useState<string | undefined>();
   const [password, setPassword] = useState<string | undefined>();
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId:
+      "614855422365-25jf4e0j0di95edkcslenrd6hm8baptf.apps.googleusercontent.com",
+  });
+  const { login, checkAuth } = useAuth();
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleForgotPassword = () => {};
-  const handleContinue = () => {};
-  const handleSignInGoogle = () => {};
+
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) return;
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const token = await userCredential.user.getIdToken();
+      const userData: User = {
+        email: userCredential.user.email || "",
+        firstName: userCredential.user.displayName || "",
+        lastName: "",
+        phone: userCredential.user.phoneNumber || "",
+      };
+
+      await login(userData, token);
+      setError(false);
+    } catch (error: any) {
+      setError(true);
+      console.log("Login failed:", error.message);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const result = await promptAsync();
+    if (result?.type === "success") {
+      const idToken = result.authentication?.idToken;
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      console.log("Google user:", userCredential.user);
+    }
+  };
+
   return (
     <ThemedView className="flex-1 justify-end">
       <View className="items-start p-10 flex gap-8 ">
@@ -57,6 +106,7 @@ export default function LoginScreen() {
               setValue={setPassword}
               textContentType="password"
               keyboardType="visible-password"
+              warning={error ? "Invalid Password" : undefined}
             />
             <TouchableOpacity
               className="items-end"
@@ -65,7 +115,7 @@ export default function LoginScreen() {
               <ThemedText type="link">Forgot Password?</ThemedText>
             </TouchableOpacity>
           </View>
-          <ThemedButton type="primary" bold onPress={handleContinue}>
+          <ThemedButton type="primary" bold onPress={handleLogin}>
             Continue
           </ThemedButton>
           <View className="flex flex-row items-center gap-2">
@@ -73,7 +123,11 @@ export default function LoginScreen() {
             <ThemedText style={{ color: "#D9D9D9" }}>Or</ThemedText>
             <View className="flex flex-1 h-0 border-[0.5px] border-[#D9D9D9]" />
           </View>
-          <ThemedButton type="outlined" bold onPress={handleSignInGoogle}>
+          <ThemedButton
+            type="outlined"
+            bold
+            onPress={() => handleGoogleLogin()}
+          >
             Continue with Google
           </ThemedButton>
         </View>

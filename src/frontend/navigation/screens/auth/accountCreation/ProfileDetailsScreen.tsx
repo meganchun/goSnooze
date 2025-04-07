@@ -2,7 +2,6 @@ import { ThemedText } from "@/src/frontend/components/common/ThemedText";
 import { ThemedView } from "@/src/frontend/components/common/ThemedView";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import ChevronLeftIcon from "react-native-vector-icons/FontAwesome6";
-import PhoneInput from "react-native-phone-number-input";
 import { useEffect, useRef, useState } from "react";
 import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 import { useNavigation } from "@react-navigation/native";
@@ -11,11 +10,20 @@ import { RootStackParamList } from "../../../MainNavigation";
 import UploadIcon from "react-native-vector-icons/Octicons";
 import TextEntry from "@/src/frontend/components/common/TextEntry";
 import * as ImagePicker from "expo-image-picker";
+import CheckBox from "@react-native-community/checkbox";
+import { Colours } from "@/src/frontend/constants/Colours";
+import Icon from "react-native-vector-icons/Ionicons";
 
 type ProfileDetailScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
-  "OTP"
+  "ProfileDetails"
 >;
+
+type PasswordRule =
+  | "At least 8 characters"
+  | "At least one number or symbol"
+  | "One lowercase character"
+  | "One uppercase character";
 
 export default function ProfileDetailsScreen() {
   const navigation = useNavigation<ProfileDetailScreenNavigationProp>();
@@ -25,6 +33,15 @@ export default function ProfileDetailsScreen() {
   const [verifyPassword, setVerifyPassword] = useState<string | undefined>();
   const [image, setImage] = useState<string[] | undefined>();
   const [valid, setValid] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+  const [passwordChecklist, setPasswordChecklist] = useState<
+    Record<PasswordRule, boolean>
+  >({
+    "At least 8 characters": false,
+    "At least one number or symbol": false,
+    "One lowercase character": false,
+    "One uppercase character": false,
+  });
 
   useEffect(() => {
     if (valid) {
@@ -73,15 +90,20 @@ export default function ProfileDetailsScreen() {
       <View className="header flex mx-8 gap-8 items-center justify-center">
         <View className="profile-photo rounded-full flex justify-center items-center">
           {!image && (
-            <View className="flex w-28 h-28  bg-[#D9D9D9] flex justify-center rounded-full items-center">
-              <UploadIcon
-                name="upload"
-                size={36}
-                className=" "
-                color="#ffffff"
-                onPress={handleGalleryLaunch}
-              />
-            </View>
+            <>
+              <View className="flex w-28 h-28  bg-[#D9D9D9] flex justify-center rounded-full items-center">
+                <UploadIcon
+                  name="upload"
+                  size={36}
+                  className=" "
+                  color="#ffffff"
+                  onPress={handleGalleryLaunch}
+                />
+              </View>
+              <TouchableOpacity onPress={handleGalleryLaunch}>
+                <ThemedText type="link">Upload a photo</ThemedText>
+              </TouchableOpacity>
+            </>
           )}
           {image && (
             <View className="flex flex-col w-full items-center">
@@ -97,10 +119,8 @@ export default function ProfileDetailsScreen() {
         </View>
 
         <View className="text-boxes flex flex-col gap-4 w-full">
-          <View className="username-container flex flex-col w-full gap-2">
-            <ThemedText type="defaultBold" style={{ color: "#757575" }}>
-              Username
-            </ThemedText>
+          <View className="username-container flex flex-col w-full gap-1">
+            <ThemedText type="default">Email</ThemedText>
             <TextEntry
               className="email-text w-full"
               value={email}
@@ -110,10 +130,8 @@ export default function ProfileDetailsScreen() {
               textContentType="emailAddress"
             />
           </View>
-          <View className="password-container flex flex-col w-full gap-2">
-            <ThemedText type="defaultBold" style={{ color: "#757575" }}>
-              Password
-            </ThemedText>
+          <View className="password-container flex flex-col w-full gap-1">
+            <ThemedText type="default">Password</ThemedText>
             <TextEntry
               className="password-text w-full"
               value={password}
@@ -123,10 +141,8 @@ export default function ProfileDetailsScreen() {
               keyboardType="visible-password"
             />
           </View>
-          <View className="verify-password-container flex flex-col w-full gap-2">
-            <ThemedText type="defaultBold" style={{ color: "#757575" }}>
-              Confirm Password
-            </ThemedText>
+          <View className="verify-password-container flex flex-col w-full gap-1">
+            <ThemedText type="default">Confirm Password</ThemedText>
             <TextEntry
               className="password-text w-full"
               value={verifyPassword}
@@ -136,8 +152,34 @@ export default function ProfileDetailsScreen() {
               keyboardType="visible-password"
             />
           </View>
-
-          <ThemedButton type="primary" bold onPress={createAccount}>
+          <View className="flex flex-col gap-1">
+            {(Object.keys(passwordChecklist) as PasswordRule[]).map(
+              (option) => (
+                <ThemedText
+                  key={option}
+                  type="description"
+                  style={{
+                    color: passwordChecklist[option]
+                      ? Colours.constant.approved
+                      : Colours.constant.danger,
+                  }}
+                  className="flex flex-row items-center"
+                >
+                  <Icon
+                    name="checkmark-circle"
+                    className="flex items-self-center"
+                  />
+                  {option}
+                </ThemedText>
+              )
+            )}
+          </View>
+          <ThemedButton
+            className="w-full "
+            type="primary"
+            bold
+            onPress={createAccount}
+          >
             Next
           </ThemedButton>
         </View>

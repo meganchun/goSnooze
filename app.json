@@ -2,6 +2,7 @@
   "expo": {
     "name": "go-snooze",
     "slug": "go-snooze",
+    "scheme": "go-snooze",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash-icon.png",
@@ -9,7 +10,7 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#0057FF"
     },
     "plugins": [
@@ -22,7 +23,11 @@
       "expo-secure-store"
     ],
     "ios": {
-      "supportsTablet": true,
+      "buildNumber": "1.0.0",
+      "runtimeVersion": {
+        "policy": "sdkVersion"
+      },
+      "deploymentTarget": "13.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need access to your location to provide live tracking.",
         "NSLocationAlwaysUsageDescription": "We need access to your location even when the app is in the background."
