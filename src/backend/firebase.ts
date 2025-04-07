@@ -1,10 +1,13 @@
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signInWithPhoneNumber,
   signInWithCredential,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
+  ConfirmationResult,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -19,11 +22,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 export {
   auth,
+  db,
   signInWithEmailAndPassword,
+  signInWithPhoneNumber,
   createUserWithEmailAndPassword,
   signInWithCredential,
   GoogleAuthProvider,
+  ConfirmationResult,
 };

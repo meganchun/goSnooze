@@ -8,6 +8,8 @@ import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../MainNavigation";
+import { auth, signInWithPhoneNumber } from "@/src/backend/firebase";
+import { useAuth } from "@/src/frontend/context/AuthContext";
 
 type PhoneNumberScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -17,17 +19,23 @@ type PhoneNumberScreenNavigationProp = StackNavigationProp<
 export default function PhoneNumberScreen() {
   const navigation = useNavigation<PhoneNumberScreenNavigationProp>();
 
+  const { sendOTP } = useAuth();
+
   const [value, setValue] = useState("");
   const [formattedValue, setFormattedValue] = useState("");
   const [valid, setValid] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
 
   useEffect(() => {
-    if (valid) {
-      navigation.navigate("Login");
-    }
+    const handleSendOTP = async () => {
+      if (valid) {
+        await sendOTP(value);
+        navigation.navigate("OTP");
+      }
+    };
+    handleSendOTP();
   }, [valid]);
+
   return (
     <ThemedView className="flex-1">
       <View className="header flex mx-8 my-10 gap-16">
@@ -60,7 +68,6 @@ export default function PhoneNumberScreen() {
           bold
           onPress={() => {
             const checkValid = phoneInput.current?.isValidNumber(value);
-            setShowMessage(true);
             setValid(checkValid ? checkValid : false);
           }}
         >

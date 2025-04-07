@@ -9,30 +9,37 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../MainNavigation";
 import TextEntry from "@/src/frontend/components/common/TextEntry";
+import { useAuth } from "@/src/frontend/context/AuthContext";
+import { Colours } from "@/src/frontend/constants/Colours";
 
-type OTPScreenNavigationProp = StackNavigationProp<RootStackParamList, "OTP">;
+type OTPScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "OTP",
+  "ProfileDetails"
+>;
 
 export default function OTPScreen() {
   const navigation = useNavigation<OTPScreenNavigationProp>();
+
+  const { verifyOTP, isOTPVerified, OTP, setOTP, error } = useAuth();
 
   const [value, setValue] = useState("");
   const [valid, setValid] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
 
-  const [code, setCode] = useState<(string | undefined)[]>([
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-  ]);
-
   useEffect(() => {
-    if (valid) {
-      navigation.navigate("Login");
+    if (isOTPVerified) {
+      navigation.navigate("ProfileDetails");
     }
-  }, [valid]);
+  }, [isOTPVerified]);
+
+  const handleVerifyOTP = async () => {
+    try {
+      await verifyOTP();
+    } catch (error: any) {
+      console.log("Error");
+    }
+  };
 
   return (
     <ThemedView className="flex-1">
@@ -44,14 +51,23 @@ export default function OTPScreen() {
         </ThemedText>
       </View>
       <View className="header flex mx-8 my-10 gap-8 justify-center">
+        <ThemedText
+          type="description"
+          style={{
+            color: Colours.constant.danger,
+          }}
+        >
+          {error}
+        </ThemedText>
         <View className="flex flex-row justify-between">
-          {code.map((value, index) => (
+          {[...Array(6)].map((_, index) => (
             <TextEntry
-              value={value}
+              key={index}
+              value={OTP[index]}
               setValue={(value) => {
-                const newCode = [...code];
-                newCode[index] = value;
-                setCode(newCode);
+                const newOTP = OTP.split("");
+                newOTP[index] = value || "";
+                setOTP(newOTP.join(""));
               }}
               textContentType="oneTimeCode"
               keyboardType="numeric"
@@ -60,15 +76,7 @@ export default function OTPScreen() {
           ))}
         </View>
 
-        <ThemedButton
-          type="primary"
-          bold
-          onPress={() => {
-            const checkValid = phoneInput.current?.isValidNumber(value);
-
-            setValid(checkValid ? checkValid : false);
-          }}
-        >
+        <ThemedButton type="primary" bold onPress={() => handleVerifyOTP()}>
           Next
         </ThemedButton>
       </View>

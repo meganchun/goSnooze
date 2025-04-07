@@ -31,24 +31,6 @@ export default function MainNavigation() {
         />
       ) : (
         <>
-          {/* <Stack.Screen
-            name="Home"
-            component={NavBar} // Use NavBar here as the main screen
-            options={{ headerShown: false }} // No header needed, since NavBar is the main navigation
-          /> */}
-          {/* <Stack.Screen
-            name="PhoneNumber"
-            component={PhoneNumberScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }} // You can add your header config if needed
-          /> 
-    
-         
-          */}
           <Stack.Screen
             name="Login"
             component={LoginScreen}

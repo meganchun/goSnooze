@@ -15,10 +15,16 @@ import {
 } from "@/src/backend/firebase";
 import { useAuth } from "@/src/frontend/context/AuthContext";
 import { User } from "@/src/frontend/types/userTypes";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../MainNavigation";
 
 WebBrowser.maybeCompleteAuthSession();
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
+  const navigation = useNavigation<NavigationProp>();
+
   const [email, setEmail] = useState<string | undefined>();
   const [password, setPassword] = useState<string | undefined>();
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -30,9 +36,11 @@ export default function LoginScreen() {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
-  const handleForgotPassword = () => {};
+  const handleForgotPassword = () => {
+    navigation.navigate("PhoneNumber");
+  };
 
   const handleLogin = async () => {
     try {
@@ -45,13 +53,11 @@ export default function LoginScreen() {
       const token = await userCredential.user.getIdToken();
       const userData: User = {
         email: userCredential.user.email || "",
-        firstName: userCredential.user.displayName || "",
+        firstName: "",
         lastName: "",
         phone: userCredential.user.phoneNumber || "",
       };
-
       await login(userData, token);
-      setError(false);
     } catch (error: any) {
       setError(true);
       console.log("Login failed:", error.message);

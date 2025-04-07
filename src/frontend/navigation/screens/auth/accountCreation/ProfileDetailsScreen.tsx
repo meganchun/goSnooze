@@ -13,6 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import CheckBox from "@react-native-community/checkbox";
 import { Colours } from "@/src/frontend/constants/Colours";
 import Icon from "react-native-vector-icons/Ionicons";
+import { useAuth } from "@/src/frontend/context/AuthContext";
 
 type ProfileDetailScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -28,12 +29,13 @@ type PasswordRule =
 export default function ProfileDetailsScreen() {
   const navigation = useNavigation<ProfileDetailScreenNavigationProp>();
 
+  const { createUser } = useAuth();
+
   const [email, setEmail] = useState<string | undefined>();
   const [password, setPassword] = useState<string | undefined>();
-  const [verifyPassword, setVerifyPassword] = useState<string | undefined>();
+  const [verifyPassword, setVerifyPassword] = useState<string>();
   const [image, setImage] = useState<string[] | undefined>();
-  const [valid, setValid] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
+  const [passwordMatchError, setPasswordMatchError] = useState<boolean>(false);
   const [passwordChecklist, setPasswordChecklist] = useState<
     Record<PasswordRule, boolean>
   >({
@@ -43,13 +45,15 @@ export default function ProfileDetailsScreen() {
     "One uppercase character": false,
   });
 
-  useEffect(() => {
-    if (valid) {
-      navigation.navigate("Login");
-    }
-  }, [valid]);
+  const passwordError = Object.values(passwordChecklist).some(
+    (value) => value === true
+  );
 
-  const createAccount = () => {};
+  const createAccount = () => {
+    if (!passwordMatchError && !passwordError && email) {
+      createUser(email, "test", image ? image[0] : undefined);
+    }
+  };
 
   const requestPermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -77,6 +81,12 @@ export default function ProfileDetailsScreen() {
     if (!result.canceled) {
       setImage(result.assets.map((asset) => asset.uri));
     }
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setVerifyPassword(value);
+    if (value !== password) setPasswordMatchError(true);
+    else setPasswordMatchError(false);
   };
 
   return (
@@ -147,9 +157,12 @@ export default function ProfileDetailsScreen() {
               className="password-text w-full"
               value={verifyPassword}
               placeholder=""
-              setValue={setVerifyPassword}
+              setValue={(value) => handlePasswordChange(value || "")}
               textContentType="password"
               keyboardType="visible-password"
+              warning={
+                passwordMatchError ? "Passwords do not match" : undefined
+              }
             />
           </View>
           <View className="flex flex-col gap-1">
