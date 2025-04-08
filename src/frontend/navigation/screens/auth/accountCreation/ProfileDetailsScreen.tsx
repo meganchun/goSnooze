@@ -2,7 +2,7 @@ import { ThemedText } from "@/src/frontend/components/common/ThemedText";
 import { ThemedView } from "@/src/frontend/components/common/ThemedView";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import ChevronLeftIcon from "react-native-vector-icons/FontAwesome6";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -10,7 +10,6 @@ import { RootStackParamList } from "../../../MainNavigation";
 import UploadIcon from "react-native-vector-icons/Octicons";
 import TextEntry from "@/src/frontend/components/common/TextEntry";
 import * as ImagePicker from "expo-image-picker";
-import CheckBox from "@react-native-community/checkbox";
 import { Colours } from "@/src/frontend/constants/Colours";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "@/src/frontend/context/AuthContext";
@@ -92,7 +91,11 @@ export default function ProfileDetailsScreen() {
   return (
     <ThemedView className="flex-1">
       <View className="header flex mx-8 my-10 gap-16">
-        <ChevronLeftIcon name="chevron-left" size={24} />
+        <ChevronLeftIcon
+          name="chevron-left"
+          size={24}
+          onPress={navigation.goBack}
+        />
         <ThemedText className="px-30" type="title">
           <Text style={{ color: "#0057FF" }}>Almost</Text> there!
         </ThemedText>
@@ -168,22 +171,27 @@ export default function ProfileDetailsScreen() {
           <View className="flex flex-col gap-1">
             {(Object.keys(passwordChecklist) as PasswordRule[]).map(
               (option) => (
-                <ThemedText
-                  key={option}
-                  type="description"
-                  style={{
-                    color: passwordChecklist[option]
-                      ? Colours.constant.approved
-                      : Colours.constant.danger,
-                  }}
-                  className="flex flex-row items-center"
-                >
+                <View className="flex flex-row items-center gap-1">
                   <Icon
                     name="checkmark-circle"
-                    className="flex items-self-center"
+                    style={{
+                      color: passwordChecklist[option]
+                        ? Colours.constant.approved
+                        : Colours.constant.danger,
+                    }}
                   />
-                  {option}
-                </ThemedText>
+                  <ThemedText
+                    key={option}
+                    type="description"
+                    style={{
+                      color: passwordChecklist[option]
+                        ? Colours.constant.approved
+                        : Colours.constant.danger,
+                    }}
+                  >
+                    {option}
+                  </ThemedText>
+                </View>
               )
             )}
           </View>

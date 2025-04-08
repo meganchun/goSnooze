@@ -69,15 +69,17 @@ export default function TextEntry({
   const [isVisible, setIsVisible] = useState(!(textContentType === "password"));
 
   return (
-    <View className="container relative h-auto bg-[#00000]">
-      <ThemedText
-        type="description"
-        style={{
-          color: Colours.constant.danger,
-        }}
-      >
-        {warning}
-      </ThemedText>
+    <View className={`container relative h-auto bg-[#00000] ${className}`}>
+      {warning && (
+        <ThemedText
+          type="description"
+          style={{
+            color: Colours.constant.danger,
+          }}
+        >
+          {warning}
+        </ThemedText>
+      )}
       <View>
         <TextInput
           className="border border-[#D9D9D9] rounded relative"

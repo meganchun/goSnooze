@@ -26,25 +26,30 @@ export default function MainNavigation() {
       {isAuthenticated ? (
         <Stack.Screen
           name="Main"
-          component={NavBar} // Use NavBar here as the main screen
-          options={{ headerShown: false }} // No header needed, since NavBar is the main navigation
+          component={NavBar}
+          options={{ headerShown: false }}
         />
       ) : (
         <>
           <Stack.Screen
             name="Login"
             component={LoginScreen}
-            options={{ headerShown: false }} // You can add your header config if needed
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="ProfileDetails"
             component={ProfileDetailsScreen}
-            options={{ headerShown: false }} // You can add your header config if needed
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="OTP"
             component={OTPScreen}
-            options={{ headerShown: false }} // You can add your header config if needed
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PhoneNumber"
+            component={PhoneNumberScreen}
+            options={{ headerShown: false }}
           />
         </>
       )}

@@ -20,7 +20,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../MainNavigation";
 
 WebBrowser.maybeCompleteAuthSession();
-type NavigationProp = StackNavigationProp<RootStackParamList>;
+type NavigationProp = StackNavigationProp<RootStackParamList, "Login">;
 
 export default function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -30,6 +30,7 @@ export default function LoginScreen() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId:
       "614855422365-25jf4e0j0di95edkcslenrd6hm8baptf.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
   });
   const { login, checkAuth } = useAuth();
   const [error, setError] = useState(false);
@@ -99,6 +100,7 @@ export default function LoginScreen() {
               placeholder="example@gmail.com"
               keyboardType="email-address"
               textContentType="emailAddress"
+              warning={error ? "Invalid Email or Password" : undefined}
             />
           </View>
           <View className="password-container flex flex-col w-full gap-2">
@@ -112,7 +114,7 @@ export default function LoginScreen() {
               setValue={setPassword}
               textContentType="password"
               keyboardType="visible-password"
-              warning={error ? "Invalid Password" : undefined}
+              warning={error ? "Invalid Email or Password" : undefined}
             />
             <TouchableOpacity
               className="items-end"
@@ -130,6 +132,7 @@ export default function LoginScreen() {
             <View className="flex flex-1 h-0 border-[0.5px] border-[#D9D9D9]" />
           </View>
           <ThemedButton
+            icon="logo-google"
             type="outlined"
             bold
             onPress={() => handleGoogleLogin()}

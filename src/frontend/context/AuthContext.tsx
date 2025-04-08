@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import { User } from "../types/userTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
@@ -10,9 +10,10 @@ import {
   ConfirmationResult,
   createUserWithEmailAndPassword,
   db,
-  signInWithPhoneNumber,
 } from "@/src/backend/firebase";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
+import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 
 interface AuthContextType {
   login: (userData: User, token: string) => void;
@@ -52,13 +53,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [OTP, setOTP] = useState<string>("");
   const [isOTPVerified, setIsOTPVerified] = useState<boolean>(false);
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
-    null
-  );
+  const [verificationId, setVerificationId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const recaptchaVerifier = useRef(null);
 
   const logout = async () => {
     try {
@@ -93,6 +94,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: userFromFirestore.email,
           phone: userFromFirestore.phoneNumber,
         });
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Main" }],
+        });
         navigation.navigate("Main");
       } else console.log("No such document!");
     } catch (error) {
@@ -125,33 +130,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const sendOTP = async (phoneNumber: string) => {
     try {
-      const confirmationResponse: ConfirmationResult =
-        await signInWithPhoneNumber(auth, phoneNumber);
-      setConfirmation(confirmationResponse);
-      setUserPhone(phoneNumber);
-      setError(null);
+      if (recaptchaVerifier.current) {
+        const phoneProvider = new PhoneAuthProvider(auth);
+        const verificationId = await phoneProvider.verifyPhoneNumber(
+          phoneNumber,
+          recaptchaVerifier.current
+        );
+        setVerificationId(verificationId);
+        setUserPhone(phoneNumber);
+        setError(null);
+        navigation.navigate("OTP");
+      }
     } catch (error: any) {
       console.log("Error sending OTP: ", error.message);
       setError("Failed to send OTP. Please try again.");
-    } finally {
-      navigation.navigate("OTP");
+      navigation.navigate("PhoneNumber");
     }
   };
 
   const verifyOTP = async () => {
-    if (confirmation) {
-      if (OTP.length !== 6) setError("Please enter full OTP");
-      else {
+    if (verificationId) {
+      if (OTP.length !== 6) {
+        setError("Please enter full OTP.");
+        return;
+      } else {
         try {
-          await confirmation.confirm(OTP);
+          const credential = PhoneAuthProvider.credential(verificationId, OTP);
+          await signInWithCredential(auth, credential);
           setIsOTPVerified(true);
           setError(null);
+          setOTP("");
+          navigation.navigate("ProfileDetails");
         } catch (error: any) {
-          console.error("Error verifying OTP:", error.message);
-          setError("Failed to verify OTP. Please try again.");
+          setError("Incorrect OTP.");
+          console.log("Error verifying OTP:", error.message);
         }
       }
-    } else console.error("Failed to verify OTP. Please try again.");
+    } else console.log("Missing verification ID. Please try again.");
   };
 
   const createUser = async (
@@ -216,6 +231,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
       }}
     >
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={auth.app.options}
+      />
       {children}
     </AuthContext.Provider>
   );
