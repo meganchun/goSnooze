@@ -3,7 +3,7 @@ import { ThemedView } from "@/src/frontend/components/common/ThemedView";
 import { Text, View } from "react-native";
 import ChevronLeftIcon from "react-native-vector-icons/FontAwesome6";
 import PhoneInput from "react-native-phone-number-input";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";

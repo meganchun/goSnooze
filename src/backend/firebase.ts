@@ -6,6 +6,7 @@ import {
   signInWithPhoneNumber,
   signInWithCredential,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   GoogleAuthProvider,
   ConfirmationResult,
 } from "firebase/auth";
@@ -31,6 +32,7 @@ export {
   signInWithPhoneNumber,
   createUserWithEmailAndPassword,
   signInWithCredential,
+  sendEmailVerification,
   GoogleAuthProvider,
   ConfirmationResult,
 };

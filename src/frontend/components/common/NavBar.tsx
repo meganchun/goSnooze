@@ -8,9 +8,9 @@ import { useThemeColour } from "../../hooks/useThemeColour";
 import SettingIcon from "react-native-vector-icons/MaterialIcons";
 import HouseIcon from "react-native-vector-icons/FontAwesome6";
 import BellIcon from "react-native-vector-icons/Ionicons";
-import PhoneNumberScreen from "../../navigation/screens/auth/accountCreation/PhoneNumberScreen";
-import OTPScreen from "../../navigation/screens/auth/accountCreation/OTPScreen";
-import ProfileDetailsScreen from "../../navigation/screens/auth/accountCreation/ProfileDetailsScreen";
+import PhoneNumberScreen from "../../navigation/screens/auth/account-creation/PhoneNumberScreen";
+import OTPScreen from "../../navigation/screens/auth/account-creation/OTPScreen";
+import ProfileDetailsScreen from "../../navigation/screens/auth/account-creation/ProfileDetailsScreen";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -61,7 +61,7 @@ export default function NavBar({
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Alerts" component={AlertsScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
-      <Tab.Screen name="test" component={ProfileDetailsScreen} />
+      {/* <Tab.Screen name="test" component={ProfileDetailsScreen} /> */}
     </Tab.Navigator>
   );
 }

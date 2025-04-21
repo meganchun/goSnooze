@@ -50,7 +50,7 @@ export default function ProfileDetailsScreen() {
 
   const createAccount = () => {
     if (!passwordMatchError && !passwordError && email) {
-      createUser(email, "test", image ? image[0] : undefined);
+      createUser(email, "test", image ? image[0] : "");
     }
   };
 
@@ -171,7 +171,7 @@ export default function ProfileDetailsScreen() {
           <View className="flex flex-col gap-1">
             {(Object.keys(passwordChecklist) as PasswordRule[]).map(
               (option) => (
-                <View className="flex flex-row items-center gap-1">
+                <View key={option} className="flex flex-row items-center gap-1">
                   <Icon
                     name="checkmark-circle"
                     style={{

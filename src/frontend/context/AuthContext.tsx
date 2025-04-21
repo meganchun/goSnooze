@@ -7,12 +7,16 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/MainNavigation";
 import {
   auth,
-  ConfirmationResult,
   createUserWithEmailAndPassword,
   db,
 } from "@/src/backend/firebase";
 import { addDoc, collection, doc, getDoc } from "firebase/firestore";
-import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import {
+  PhoneAuthProvider,
+  signInWithCredential,
+  sendEmailVerification,
+  UserCredential,
+} from "firebase/auth";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 
 interface AuthContextType {
@@ -27,8 +31,12 @@ interface AuthContextType {
   setOTP: (OTP: string) => void;
   isOTPVerified: boolean;
   setIsOTPVerified: (isOTPVerified: boolean) => void;
+  isEmailVerified: boolean;
+  setIsEmailVerified: (isEmailVerified: boolean) => void;
   sendOTP: (userPhone: string) => void;
+  sendEmail: () => void;
   verifyOTP: () => void;
+  verifyEmailVerification: (interval: NodeJS.Timeout) => void;
   userEmail: string | null;
   setUserEmail: (userEmail: string) => void;
   userPhone: string | null;
@@ -53,6 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [OTP, setOTP] = useState<string>("");
   const [isOTPVerified, setIsOTPVerified] = useState<boolean>(false);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
@@ -77,6 +86,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (userData: User, token: string) => {
     try {
+      await auth.currentUser?.reload();
+
+      if (!auth.currentUser?.emailVerified) {
+        setError("Please verify your email before logging in.");
+        return;
+      }
+
       await AsyncStorage.setItem("userData", JSON.stringify(userData));
       await SecureStore.setItemAsync("userToken", token);
       setUser(userData);
@@ -93,6 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           firstName: userFromFirestore.name,
           email: userFromFirestore.email,
           phone: userFromFirestore.phoneNumber,
+          profilePicture: userFromFirestore.profilePicture,
         });
         navigation.reset({
           index: 0,
@@ -148,6 +165,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const sendEmail = async () => {
+    if (auth.currentUser) await sendEmailVerification(auth.currentUser);
+  };
+  const verifyEmailVerification = async (interval: NodeJS.Timeout) => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified && user) {
+        const token = await auth.currentUser.getIdToken();
+        clearInterval(interval);
+        login(user, token);
+        navigation.navigate("SuccessEmail");
+      }
+    }
+  };
+
   const verifyOTP = async () => {
     if (verificationId) {
       if (OTP.length !== 6) {
@@ -182,6 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email,
           userPhone
         );
+        await sendEmail();
         const token = await userCredential.user.getIdToken();
         const userRef = collection(db, "users");
 
@@ -197,11 +230,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           firstName: userCredential.user.displayName || "",
           lastName: "",
           phone: userCredential.user.phoneNumber || "",
+          profilePicture: profilePicture || "",
         };
-        await login(userData, token);
+
+        navigation.navigate("VerifyingEmail");
+        // await login(userData, token);
         setError(null);
-      } catch (error: any) {
-        console.error("Failed to create user.");
+      } catch (error) {
+        console.error("Failed to create user.", error);
       }
     }
   };
@@ -219,6 +255,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         verifyOTP,
         userEmail,
         setUserEmail,
+        sendEmail,
+        isEmailVerified,
+        setIsEmailVerified,
+        verifyEmailVerification,
         userPhone,
         setUserPhone,
         user,

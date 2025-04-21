@@ -57,6 +57,7 @@ export default function LoginScreen() {
         firstName: "",
         lastName: "",
         phone: userCredential.user.phoneNumber || "",
+        profilePicture: "",
       };
       await login(userData, token);
     } catch (error: any) {
