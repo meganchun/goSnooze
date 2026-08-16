@@ -1,16 +1,15 @@
 // Smoke-test the deployed transit-proxy Edge Function.
 //
-// Usage (Node 20+):
+// Usage (Node 18+):
 //   node --env-file=.env scripts/test-transit.mjs
 //
-// It calls each operation the app uses and reports whether real data came
-// back, so you can confirm the Metrolinx paths + GO_TRANSIT_API_KEY are right
-// without poking around the app. If your project requires a signed-in user,
-// set TEST_EMAIL / TEST_PASSWORD for a confirmed account and it will sign in.
+// Uses plain fetch (no supabase-js) so it has no Node/WebSocket dependencies.
+// It calls each operation the app uses and reports whether real data came back,
+// so you can confirm the Metrolinx paths + GO_TRANSIT_API_KEY are right without
+// poking around the app. If the function requires a signed-in user, set
+// TEST_EMAIL / TEST_PASSWORD for a confirmed account and it will sign in first.
 
-import { createClient } from "@supabase/supabase-js";
-
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
@@ -21,40 +20,60 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const supabase = createClient(url, key);
-
+// Optionally sign in to get a user JWT (needed if the function verifies JWTs
+// and the publishable key alone is rejected).
+let bearer = key;
 if (process.env.TEST_EMAIL && process.env.TEST_PASSWORD) {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: process.env.TEST_EMAIL,
-    password: process.env.TEST_PASSWORD,
+  const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: key, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: process.env.TEST_EMAIL,
+      password: process.env.TEST_PASSWORD,
+    }),
   });
-  if (error) console.warn("Sign-in failed, continuing anonymously:", error.message);
-  else console.log("Signed in as", process.env.TEST_EMAIL);
+  const j = await res.json();
+  if (j.access_token) {
+    bearer = j.access_token;
+    console.log("Signed in as", process.env.TEST_EMAIL);
+  } else {
+    console.warn("Sign-in failed, continuing with the anon key:", j.error_description || j.msg || JSON.stringify(j));
+  }
 }
 
 const call = async (label, body, describe) => {
-  const { data, error } = await supabase.functions.invoke("transit-proxy", { body });
-  if (error) {
-    console.log(`❌ ${label}: ${error.message}`);
+  const res = await fetch(`${url}/functions/v1/transit-proxy`, {
+    method: "POST",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${bearer}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = text;
+  }
+  if (!res.ok) {
+    console.log(`❌ ${label}: HTTP ${res.status} — ${typeof data === "string" ? data : JSON.stringify(data)}`);
     return null;
   }
   const summary = describe(data);
-  console.log(`${summary ? "✅" : "⚠️ "} ${label}: ${summary || "no data — check the path"}`);
+  console.log(`${summary ? "✅" : "⚠️ "} ${label}: ${summary || "call ok but shape looks off — check the path"}`);
   return data;
 };
 
 // 1) All lines
 const lines = await call("lines", { operation: "lines" }, (d) => {
-  const list = d?.Lines?.Line ?? d?.Lines ?? [];
-  const n = Array.isArray(list) ? list.length : 0;
-  return n ? `${n} lines (e.g. ${JSON.stringify(list[0])?.slice(0, 80)}…)` : "";
+  const list = d?.Lines?.Line ?? [];
+  return Array.isArray(list) && list.length ? `${list.length} lines` : "";
 });
 
-// Try to derive a line + direction for the next call from the response.
-const firstLine = (() => {
-  const list = lines?.Lines?.Line ?? [];
-  return Array.isArray(list) && list[0] ? list[0] : null;
-})();
+const firstLine = lines?.Lines?.Line?.[0] ?? null;
 const lineCode = firstLine?.Code ?? firstLine?.LineCode ?? "01";
 const direction = firstLine?.Direction ?? "N";
 
@@ -68,7 +87,7 @@ const stops = await call(
   }
 );
 
-// 3) Stop details (use a stop code from the previous call if available)
+// 3) Stop details
 const stopCode = stops?.Lines?.Stop?.[0]?.Code ?? "02799";
 await call("stopInfo", { operation: "stopInfo", stopCode: String(stopCode) }, (d) =>
   d?.Stop?.StopName ? `stop ${stopCode} = ${d.Stop.StopName}` : ""
