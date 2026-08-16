@@ -12,6 +12,7 @@ import {
   uploadProfileImage,
 } from "../services/profileService";
 import { User } from "../types/userTypes";
+import { describeError } from "../services/errors";
 
 interface AuthContextType {
   error: string | null;
@@ -48,16 +49,6 @@ interface AuthContextType {
 type AuthNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const describeAuthError = (message: string): string => {
-  const normalized = message.toLowerCase();
-  if (normalized.includes("invalid login")) return "Invalid email or password.";
-  if (normalized.includes("already registered")) return "That email is already in use.";
-  if (normalized.includes("rate limit")) return "Too many attempts. Please try again shortly.";
-  if (normalized.includes("expired")) return "That code has expired. Request a new one.";
-  if (normalized.includes("token")) return "That code is incorrect. Please try again.";
-  return message || "Something went wrong. Please try again.";
-};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigation = useNavigation<AuthNavigationProp>();
@@ -110,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (cause: any) {
       console.error("Unable to restore Supabase session:", cause);
       applyProfile(null);
-      setError(describeAuthError(cause?.message || ""));
+      setError(describeError(cause?.message || ""));
     } finally {
       setLoading(false);
     }
@@ -133,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     const { error: signOutError } = await supabase.auth.signOut();
     if (signOutError) {
-      setError(describeAuthError(signOutError.message));
+      setError(describeError(signOutError.message));
       return;
     }
     applyProfile(null);
@@ -149,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       password,
     });
     if (signInError) {
-      setError(describeAuthError(signInError.message));
+      setError(describeError(signInError.message));
       throw signInError;
     }
   };
@@ -161,7 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       options: { shouldCreateUser: true },
     });
     if (otpError) {
-      const message = describeAuthError(otpError.message);
+      const message = describeError(otpError.message);
       setError(message);
       throw otpError;
     }
@@ -186,7 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       type: "sms",
     });
     if (verificationError) {
-      setError(describeAuthError(verificationError.message));
+      setError(describeError(verificationError.message));
       return;
     }
     setOTP("");
@@ -214,7 +205,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       password,
     });
     if (updateError) {
-      setError(describeAuthError(updateError.message));
+      setError(describeError(updateError.message));
       return;
     }
 
@@ -236,7 +227,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigation.navigate("VerifyingEmail");
     } catch (cause: any) {
       console.error("Unable to complete profile:", cause);
-      setError(describeAuthError(cause?.message || ""));
+      setError(describeError(cause?.message || ""));
     }
   };
 
@@ -246,7 +237,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       type: "email_change",
       email: userEmail,
     });
-    if (resendError) setError(describeAuthError(resendError.message));
+    if (resendError) setError(describeError(resendError.message));
   };
 
   const verifyEmailVerification = async (interval: ReturnType<typeof setInterval>) => {
@@ -285,7 +276,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (exchangeError) throw exchangeError;
       }
     } catch (cause: any) {
-      setError(describeAuthError(cause?.message || ""));
+      setError(describeError(cause?.message || ""));
     }
   };
 

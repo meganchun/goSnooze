@@ -63,7 +63,11 @@ const call = async (label, body, describe) => {
     return null;
   }
   const summary = describe(data);
-  console.log(`${summary ? "✅" : "⚠️ "} ${label}: ${summary || "call ok but shape looks off — check the path"}`);
+  console.log(`${summary ? "✅" : "⚠️ "} ${label}: ${summary || "call ok but shape unrecognized"}`);
+  // Always show the real structure so we can see/fix the actual shape.
+  const topKeys = data && typeof data === "object" ? Object.keys(data) : [];
+  console.log(`    top-level keys: [${topKeys.join(", ")}]`);
+  console.log(`    preview: ${JSON.stringify(data).slice(0, 400)}`);
   return data;
 };
 

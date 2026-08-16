@@ -22,6 +22,7 @@ import {
   getAlertPreferences,
   saveAlertPreferences,
 } from "../../../../services/alertPreferencesService";
+import { useErrorHandler } from "../../../../hooks/useErrorHandler";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -51,7 +52,7 @@ export default function NotificationsScreen({
   const [prefs, setPrefs] = useState<AlertPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { error, setError, run } = useErrorHandler();
 
   // Load saved preferences (Supabase if signed in, otherwise the on-device cache).
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function NotificationsScreen({
         const loaded = user?.id ? await getAlertPreferences(user.id) : null;
         const resolved = loaded ?? (await getCachedAlertPreferences());
         if (!cancelled) setPrefs(resolved);
-      } catch (e: any) {
+      } catch (e) {
         // Fall back to whatever we have cached so the screen is still usable.
         const cached = await getCachedAlertPreferences();
         if (!cancelled) {
@@ -77,24 +78,20 @@ export default function NotificationsScreen({
     };
   }, [user?.id]);
 
-  // Optimistically apply a change, then persist it.
+  // Optimistically apply a change, then persist it (errors handled by the hook).
   const update = async (patch: Partial<AlertPreferences>) => {
     if (!prefs) return;
     const next = { ...prefs, ...patch };
     setPrefs(next);
     setSaving(true);
-    setError(null);
-    try {
-      if (user?.id) {
-        await saveAlertPreferences(user.id, next);
-      } else {
-        await cacheAlertPreferences(next);
-      }
-    } catch (e: any) {
-      setError("Couldn't save. Check your connection and try again.");
-    } finally {
-      setSaving(false);
-    }
+    await run(
+      async () => {
+        if (user?.id) await saveAlertPreferences(user.id, next);
+        else await cacheAlertPreferences(next);
+      },
+      { fallback: "Couldn't save. Check your connection and try again." }
+    );
+    setSaving(false);
   };
 
   const switchTrack = { false: "#D9D9D9", true: Colours.constant.approved };

@@ -19,7 +19,10 @@ import {
   getStopDetails,
 } from "../../../services/transitService";
 import { useLocation } from "../../../context/LocationContext";
-import { calculateDistance } from "../../../services/distanceService";
+import {
+  calculateDistance,
+  estimateArrival,
+} from "../../../services/distanceService";
 import ToggleSwitch from "../../../components/homepage/ToggleSwitch";
 import {
   requestNotificationPermissions,
@@ -28,7 +31,12 @@ import {
   setActiveAlarmTarget,
   getEffectiveRadiusKm,
 } from "../../../services/notificationService";
+import {
+  saveActiveAlarm,
+  clearActiveAlarm,
+} from "../../../services/alarmService";
 import { useAuth } from "../../../context/AuthContext";
+import { useErrorHandler } from "../../../hooks/useErrorHandler";
 import { DEFAULT_ARRIVAL_RADIUS_KM } from "../../../constants/alarm";
 
 export type ThemedViewProps = ViewProps & {
@@ -78,6 +86,7 @@ export default function HomeScreen({
   }, []);
 
   const { user } = useAuth();
+  const { run: runSafely } = useErrorHandler();
 
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
@@ -232,22 +241,51 @@ export default function HomeScreen({
 
   const cancelAlarm = () => {
     stopArrivalAlert();
-    setActiveAlarmTarget(null);
-    setAlarmOn(!alarmOn);
+    setActiveStation(null);
+    setAlarmOn(false);
+    runSafely(
+      () =>
+        user?.id ? clearActiveAlarm(user.id) : setActiveAlarmTarget(null),
+      { fallback: "Couldn't cancel the alarm." }
+    );
   };
 
   const handleNotify = (stop: Stop) => {
-    // Clear any in-flight buzz before arming a new stop.
-    stopArrivalAlert();
-    // Persist the target so the background task can alert while napping.
-    setActiveAlarmTarget({
+    const target = {
       stopName: stop.StopName,
       latitude: stop.Latitude,
       longitude: stop.Longitude,
-    });
+    };
+    // Clear any in-flight buzz before arming a new stop.
+    stopArrivalAlert();
     setActiveStation(stop);
     setAlarmOn(true);
+    // Persist to active_alarms (and the on-device cache the background task
+    // reads) so the alert fires even while napping / after a restart.
+    runSafely(
+      () =>
+        user?.id
+          ? saveActiveAlarm(user.id, target, radiusKm)
+          : setActiveAlarmTarget(target),
+      { fallback: "Couldn't set the alarm." }
+    );
   };
+
+  const etaLabel =
+    alarmOn && activeStation && location
+      ? estimateArrival(
+          calculateDistance(
+            {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            },
+            {
+              latitude: activeStation.Latitude,
+              longitude: activeStation.Longitude,
+            }
+          )
+        )
+      : "Calculating…";
 
   const [mode, setMode] = useState<"train" | "bus">("train");
   return (
@@ -312,6 +350,7 @@ export default function HomeScreen({
             <AlarmCard
               activeStation={activeStation}
               cancelAlarm={cancelAlarm}
+              eta={etaLabel}
             />
           )}
 

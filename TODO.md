@@ -50,12 +50,22 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
       alarm checks. Preferences are cached on-device (`getCachedAlertPreferences`
       / `getEffectiveRadiusKm`) so the background task honors them too. Pending
       on-device verification.
-- [ ] Persist the armed alarm to the `active_alarms` table (currently stored in
-      AsyncStorage) so it survives reinstall and can drive server-sent alerts.
-- [ ] Replace the fabricated alarm ETA in `AlarmCard` (`"10:50 AM"`). The home
-      greeting now reads from the signed-in user.
+- [x] Persist the armed alarm to the `active_alarms` table (via `alarmService`)
+      while keeping the AsyncStorage cache the background task reads. Pending
+      on-device verification.
+- [x] Replace the fabricated alarm ETA in `AlarmCard` with an estimate from the
+      remaining distance (`estimateArrival`). Greeting reads from the user.
 - [ ] Add secrets scanning and verify data-access (RLS) policies against the
       live project.
+
+## Architecture
+
+- [x] Central API manager (`services/apiManager.ts`): every data request
+      (`apiQuery`/`apiInvoke`/`apiUpload`/`apiPublicUrl`) goes through it and
+      normalizes failures into `ApiError`. Auth stays in `AuthContext`.
+- [x] Extensible error handling: `services/errors.ts` (`describeError` +
+      `registerErrorRule`) with the `useErrorHandler` hook used by screens and
+      contexts.
 
 ## P3 — Optional server-sent alerts
 

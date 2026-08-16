@@ -1,16 +1,12 @@
-import { supabase } from "@/src/backend/supabase";
+import { apiInvoke } from "./apiManager";
 
 type TransitOperation = "lines" | "lineStops" | "stopInfo" | "serviceAlerts";
 
-async function requestTransit<T>(
+function requestTransit<T>(
   operation: TransitOperation,
   params: Record<string, string> = {}
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("transit-proxy", {
-    body: { operation, ...params },
-  });
-  if (error) throw error;
-  return data as T;
+  return apiInvoke<T>("transit-proxy", { operation, ...params });
 }
 
 export const getLines = () => requestTransit<any>("lines");

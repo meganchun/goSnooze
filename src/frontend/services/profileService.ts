@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
-import { supabase } from "@/src/backend/supabase";
+import { apiPublicUrl, apiQuery, apiUpload } from "./apiManager";
 import { User } from "../types/userTypes";
 
 export type Profile = User & { onboardingCompleted: boolean };
@@ -24,31 +24,27 @@ const toProfile = (row: ProfileRow): Profile => ({
 });
 
 export async function getProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle<ProfileRow>();
-
-  if (error) throw error;
-  return data ? toProfile(data) : null;
+  const row = await apiQuery<ProfileRow | null>((c) =>
+    c.from("profiles").select("*").eq("id", userId).maybeSingle<ProfileRow>()
+  );
+  return row ? toProfile(row) : null;
 }
 
 export async function saveProfile(profile: Profile): Promise<Profile> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .upsert({
-      id: profile.id,
-      first_name: profile.firstName,
-      last_name: profile.lastName,
-      profile_picture_url: profile.profilePicture || null,
-      onboarding_completed: profile.onboardingCompleted,
-    })
-    .select()
-    .single<ProfileRow>();
-
-  if (error) throw error;
-  return { ...toProfile(data), email: profile.email, phone: profile.phone };
+  const row = await apiQuery<ProfileRow>((c) =>
+    c
+      .from("profiles")
+      .upsert({
+        id: profile.id,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        profile_picture_url: profile.profilePicture || null,
+        onboarding_completed: profile.onboardingCompleted,
+      })
+      .select()
+      .single<ProfileRow>()
+  );
+  return { ...toProfile(row), email: profile.email, phone: profile.phone };
 }
 
 export async function uploadProfileImage(
@@ -61,10 +57,9 @@ export async function uploadProfileImage(
     encoding: FileSystem.EncodingType.Base64,
   });
   const contentType = extension === "png" ? "image/png" : "image/jpeg";
-  const { error } = await supabase.storage
-    .from("profile-images")
-    .upload(path, decode(base64), { contentType, upsert: true });
-
-  if (error) throw error;
-  return supabase.storage.from("profile-images").getPublicUrl(path).data.publicUrl;
+  await apiUpload("profile-images", path, decode(base64), {
+    contentType,
+    upsert: true,
+  });
+  return apiPublicUrl("profile-images", path);
 }

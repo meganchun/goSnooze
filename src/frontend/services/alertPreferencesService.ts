@@ -1,4 +1,4 @@
-import { supabase } from "@/src/backend/supabase";
+import { apiQuery } from "./apiManager";
 import {
   AlertPreferences,
   cacheAlertPreferences,
@@ -25,16 +25,16 @@ const toPreferences = (row: AlertPreferencesRow): AlertPreferences => ({
 export async function getAlertPreferences(
   userId: string
 ): Promise<AlertPreferences | null> {
-  const { data, error } = await supabase
-    .from("alert_preferences")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle<AlertPreferencesRow>();
+  const row = await apiQuery<AlertPreferencesRow | null>((c) =>
+    c
+      .from("alert_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle<AlertPreferencesRow>()
+  );
+  if (!row) return null;
 
-  if (error) throw error;
-  if (!data) return null;
-
-  const prefs = toPreferences(data);
+  const prefs = toPreferences(row);
   await cacheAlertPreferences(prefs);
   return prefs;
 }
@@ -47,20 +47,20 @@ export async function saveAlertPreferences(
   userId: string,
   prefs: AlertPreferences
 ): Promise<AlertPreferences> {
-  const { data, error } = await supabase
-    .from("alert_preferences")
-    .upsert({
-      user_id: userId,
-      radius_km: prefs.radiusKm,
-      buzz_enabled: prefs.buzzEnabled,
-      sound_enabled: prefs.soundEnabled,
-    })
-    .select()
-    .single<AlertPreferencesRow>();
+  const row = await apiQuery<AlertPreferencesRow>((c) =>
+    c
+      .from("alert_preferences")
+      .upsert({
+        user_id: userId,
+        radius_km: prefs.radiusKm,
+        buzz_enabled: prefs.buzzEnabled,
+        sound_enabled: prefs.soundEnabled,
+      })
+      .select()
+      .single<AlertPreferencesRow>()
+  );
 
-  if (error) throw error;
-
-  const saved = toPreferences(data);
+  const saved = toPreferences(row);
   await cacheAlertPreferences(saved);
   return saved;
 }

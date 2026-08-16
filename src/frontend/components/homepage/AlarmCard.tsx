@@ -7,8 +7,9 @@ import { Stop } from "../../types/transitTypes";
 interface Props {
   activeStation: Stop;
   cancelAlarm: () => void;
+  eta: string;
 }
-export default function AlarmCard({ activeStation, cancelAlarm }: Props) {
+export default function AlarmCard({ activeStation, cancelAlarm, eta }: Props) {
   const confirmCancel = () => {
     Alert.alert(
       "Cancel Notification",
@@ -36,7 +37,7 @@ export default function AlarmCard({ activeStation, cancelAlarm }: Props) {
         <ThemedText type="description_light">
           Estimated time of arrival:
         </ThemedText>
-        <ThemedText type="subtitle_light">10:50 AM</ThemedText>
+        <ThemedText type="subtitle_light">{eta}</ThemedText>
       </View>
       <TouchableOpacity
         className="absolute -top-4 -right-4 bg-[#FFFF] w-8 h-8 rounded-full items-center justify-center"
