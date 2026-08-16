@@ -43,11 +43,13 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
 
 ## P2 — Polish and incomplete screens
 
-- [ ] Build Notifications settings for buzz, sound, and alert radius
-      (`NotificationsScreen` is still an empty view).
-- [ ] Apply the saved radius in the foreground and background alarm checks.
-      Radius is now a single shared constant (`constants/alarm.ts`,
-      `DEFAULT_ARRIVAL_RADIUS_KM`); wire it to `alert_preferences.radius_km`.
+- [x] Notifications settings screen for buzz, sound, and alert radius, backed by
+      `alert_preferences` (`NotificationsScreen`, `alertPreferencesService`),
+      reachable from Settings. Pending on-device verification.
+- [x] Apply the saved radius and buzz/sound in the foreground and background
+      alarm checks. Preferences are cached on-device (`getCachedAlertPreferences`
+      / `getEffectiveRadiusKm`) so the background task honors them too. Pending
+      on-device verification.
 - [ ] Persist the armed alarm to the `active_alarms` table (currently stored in
       AsyncStorage) so it survives reinstall and can drive server-sent alerts.
 - [ ] Replace the fabricated alarm ETA in `AlarmCard` (`"10:50 AM"`). The home

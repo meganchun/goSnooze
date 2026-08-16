@@ -26,6 +26,7 @@ import {
   triggerArrivalAlert,
   stopArrivalAlert,
   setActiveAlarmTarget,
+  getEffectiveRadiusKm,
 } from "../../../services/notificationService";
 import { useAuth } from "../../../context/AuthContext";
 import { DEFAULT_ARRIVAL_RADIUS_KM } from "../../../constants/alarm";
@@ -67,9 +68,13 @@ export default function HomeScreen({
 
   const { location, error } = useLocation();
 
-  // Ask for notification permission once, up front.
+  // Saved wake-up radius (km); defaults until the preference loads.
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_ARRIVAL_RADIUS_KM);
+
+  // Ask for notification permission and load the saved radius, up front.
   useEffect(() => {
     requestNotificationPermissions();
+    getEffectiveRadiusKm().then(setRadiusKm);
   }, []);
 
   const { user } = useAuth();
@@ -153,13 +158,13 @@ export default function HomeScreen({
         }
       );
 
-      if (distanceKm < DEFAULT_ARRIVAL_RADIUS_KM) {
+      if (distanceKm < radiusKm) {
         // Idempotent inside the service, so repeated location updates
         // won't stack buzzes.
         triggerArrivalAlert(activeStation.StopName);
       }
     }
-  }, [location, alarmOn, activeStation]);
+  }, [location, alarmOn, activeStation, radiusKm]);
 
   const interpolations = markers.map((marker, index) => {
     const inputRange = [

@@ -9,6 +9,7 @@ import ProfileDetailsScreen from "./screens/auth/account-creation/ProfileDetails
 import OTPScreen from "./screens/auth/account-creation/OTPScreen";
 import VerifyEmailScreen from "./screens/auth/account-creation/email-verification/VerifyingScreen";
 import SuccessVerificationScreen from "./screens/auth/account-creation/email-verification/SuccessVerificationScreen";
+import NotificationsScreen from "./screens/settings/notifications/NotificationsScreen";
 
 export type RootStackParamList = {
   Main: undefined;
@@ -18,6 +19,7 @@ export type RootStackParamList = {
   ProfileDetails: undefined;
   VerifyingEmail: undefined;
   SuccessEmail: undefined;
+  Notifications: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -30,11 +32,18 @@ export default function MainNavigation() {
   return (
     <Stack.Navigator>
       {isAuthenticated ? (
-        <Stack.Screen
-          name="Main"
-          component={NavBar}
-          options={{ headerShown: false }}
-        />
+        <>
+          <Stack.Screen
+            name="Main"
+            component={NavBar}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{ headerShown: false }}
+          />
+        </>
       ) : (
         <>
           <Stack.Screen

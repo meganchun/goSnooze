@@ -5,8 +5,8 @@ import { calculateDistance } from "../services/distanceService";
 import {
   getActiveAlarmTarget,
   triggerArrivalAlert,
+  getEffectiveRadiusKm,
 } from "../services/notificationService";
-import { DEFAULT_ARRIVAL_RADIUS_KM } from "../constants/alarm";
 
 interface LocationContextType {
   location: Location.LocationObject | null;
@@ -40,7 +40,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     { latitude: target.latitude, longitude: target.longitude }
   );
 
-  if (distanceKm < DEFAULT_ARRIVAL_RADIUS_KM) {
+  if (distanceKm < (await getEffectiveRadiusKm())) {
     await triggerArrivalAlert(target.stopName);
   }
 });

@@ -34,7 +34,7 @@ export default function SettingsScreen({
 
   const settingSubTabs = [
     { title: "Personal Information", icon: "person" },
-    { title: "Notfications", icon: "notifications" },
+    { title: "Notifications", icon: "notifications" },
     { title: "Privacy", icon: "lock" },
     { title: "Link Google account", icon: "link" },
     { title: "Logout", icon: "logout" },
@@ -80,6 +80,8 @@ export default function SettingsScreen({
                   ? handleLogout()
                   : tab.icon === "link"
                   ? linkGoogleIdentity()
+                  : tab.icon === "notifications"
+                  ? navigation.navigate("Notifications")
                   : navigation.navigate("Main");
               }}
             >
