@@ -73,13 +73,15 @@ const call = async (label, body, describe) => {
 
 // 1) All lines
 const lines = await call("lines", { operation: "lines" }, (d) => {
-  const list = d?.Lines?.Line ?? [];
+  const list = d?.AllLines?.Line ?? [];
   return Array.isArray(list) && list.length ? `${list.length} lines` : "";
 });
 
-const firstLine = lines?.Lines?.Line?.[0] ?? null;
-const lineCode = firstLine?.Code ?? firstLine?.LineCode ?? "01";
-const direction = firstLine?.Direction ?? "N";
+// Pick a line + a real direction from its Variant list for the next call.
+const allLines = lines?.AllLines?.Line ?? [];
+const firstLine = allLines.find((l) => l?.Variant?.[0]?.Direction) ?? allLines[0] ?? null;
+const lineCode = firstLine?.Code ?? "01";
+const direction = firstLine?.Variant?.[0]?.Direction ?? "E";
 
 // 2) Stops on a line
 const stops = await call(
@@ -87,7 +89,14 @@ const stops = await call(
   { operation: "lineStops", lineCode: String(lineCode), direction: String(direction) },
   (d) => {
     const list = d?.Lines?.Stop ?? [];
-    return Array.isArray(list) && list.length ? `${list.length} stops on line ${lineCode}/${direction}` : "";
+    if (Array.isArray(list) && list.length) {
+      return `${list.length} stops on line ${lineCode}/${direction}`;
+    }
+    // 204 = valid response, just no stops for this line/direction today.
+    if (d?.Metadata?.ErrorCode === "204") {
+      return `no stops for ${lineCode}/${direction} today (path works, 204)`;
+    }
+    return "";
   }
 );
 
