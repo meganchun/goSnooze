@@ -5,13 +5,13 @@
 ## Features
 
 - **📍 Location-Based Alerts:**
-	•	Sends automated SMS and voice call alerts when approaching your selected destination.
+	•	Sends local buzz and notification alerts when approaching your selected destination.
 	•	Uses Expo’s foreground and background location tracking for real-time updates.
 	•	Customizable alert radius based on user preference.
 - **🔒 Account Creation and Authentication:**
-	•	Firebase Auth with OTP-based phone number verification.
-	•	Multi-factor authentication support for enhanced account security.
-	•	Session persistence using Firebase’s client-side SDK.
+	•	Supabase Auth with OTP-based phone number verification.
+	•	Email/password and Google authentication linked to the same user identity.
+	•	Session persistence using Supabase's React Native client.
 - **🗺 Real-Time Map Interface**
 	•	Displays user’s live location alongside train routes and station markers.
 	•	Uses animated markers to reflect movement and current status.
@@ -19,8 +19,15 @@
 
 ## Tech Stack
 - Frontend: React Native, NativeWind, Expo Go
-- Backend/Services: Firebase Authentication, Firestore, Twilio API
-- APIs & Libraries: Expo Location API, React Native Maps, Twilio SDK
+- Backend/Services: Supabase Auth, Postgres, Storage, and Edge Functions
+- APIs & Libraries: Expo Location API, Expo Notifications, React Native Maps
+
+## Backend setup
+
+Follow [supabase/README.md](supabase/README.md) to create a Supabase project,
+apply the committed migration, configure phone/email/Google providers, and add
+only the public Expo configuration values to `.env`. SMS, push, and service-role
+credentials must remain in Supabase configuration or Edge Function secrets.
 
 ![User Management Flow](https://github.com/user-attachments/assets/10bae33e-0a41-4389-96e7-e01ccb2b37c7)
 ![Home Screen Flow](https://github.com/user-attachments/assets/4f420a78-ba88-4f05-a398-da7f71898a47)

@@ -9,8 +9,6 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../MainNavigation";
 import { useNavigation } from "@react-navigation/native";
 
-import { signOut } from "firebase/auth";
-import { auth } from "@/src/backend/firebase";
 import { useAuth } from "@/src/frontend/context/AuthContext";
 
 export type ThemedViewProps = ViewProps & {
@@ -27,7 +25,7 @@ export default function SettingsScreen({
   ...otherProps
 }: ThemedViewProps) {
   const navigation = useNavigation<SettingNavigationProp>();
-  const { logout } = useAuth();
+  const { logout, user, linkGoogleIdentity } = useAuth();
 
   const textColour = useThemeColour(
     { light: lightColor, dark: darkColor },
@@ -38,18 +36,12 @@ export default function SettingsScreen({
     { title: "Personal Information", icon: "person" },
     { title: "Notfications", icon: "notifications" },
     { title: "Privacy", icon: "lock" },
+    { title: "Link Google account", icon: "link" },
     { title: "Logout", icon: "logout" },
     { title: "Delete Account", icon: "delete" },
   ];
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      await logout();
-    } catch (error: any) {
-      console.error("Error logging out: ", error.message);
-    }
-  };
+  const handleLogout = async () => logout();
   return (
     <ThemedView className="flex-1">
       <View className="page-container mx-6">
@@ -64,7 +56,9 @@ export default function SettingsScreen({
                 className="mr-4 size-16 p-3 bg-[#0057FF] rounded-full"
               />
               <View>
-                <ThemedText type="defaultHeavy">Megan Chun</ThemedText>
+                <ThemedText type="defaultHeavy">
+                  {user?.firstName || "Your profile"}
+                </ThemedText>
                 <ThemedText>Show profile</ThemedText>
               </View>
             </View>
@@ -84,6 +78,8 @@ export default function SettingsScreen({
               onPress={() => {
                 tab.icon === "logout"
                   ? handleLogout()
+                  : tab.icon === "link"
+                  ? linkGoogleIdentity()
                   : navigation.navigate("Main");
               }}
             >

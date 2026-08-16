@@ -27,6 +27,7 @@ import {
   stopArrivalAlert,
   setActiveAlarmTarget,
 } from "../../../services/notificationService";
+import { useAuth } from "../../../context/AuthContext";
 
 // Distance from the target stop at which we wake the rider (in km).
 const ARRIVAL_RADIUS_KM = 0.5;
@@ -73,10 +74,7 @@ export default function HomeScreen({
     requestNotificationPermissions();
   }, []);
 
-  const tempUser = {
-    name: "Megan",
-    number: "",
-  };
+  const { user } = useAuth();
 
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
@@ -253,7 +251,7 @@ export default function HomeScreen({
     <ThemedView className="flex-1">
       <ThemedView className="flex flex-row justify-space-between items-center text-center">
         <ThemedText type="title" className="font-bold px-6 py-2">
-          Go snooze, {tempUser.name}
+          Go snooze, {user?.firstName || "there"}
         </ThemedText>
       </ThemedView>
 

@@ -1,280 +1,321 @@
-import React, { createContext, useContext, useRef, useState } from "react";
-import { User } from "../types/userTypes";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as SecureStore from "expo-secure-store";
-import { useNavigation } from "@react-navigation/native";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { useNavigation } from "@react-navigation/native";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { RootStackParamList } from "../navigation/MainNavigation";
+import { supabase } from "@/src/backend/supabase";
 import {
-  auth,
-  createUserWithEmailAndPassword,
-  db,
-} from "@/src/backend/firebase";
-import { addDoc, collection, doc, getDoc } from "firebase/firestore";
-import {
-  PhoneAuthProvider,
-  signInWithCredential,
-  sendEmailVerification,
-  UserCredential,
-} from "firebase/auth";
-import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
+  getProfile,
+  Profile,
+  saveProfile,
+  uploadProfileImage,
+} from "../services/profileService";
+import { User } from "../types/userTypes";
 
 interface AuthContextType {
-  login: (userData: User, token: string) => void;
-  logout: () => void;
   error: string | null;
-  checkAuth: () => void;
   loading: boolean;
   isAuthenticated: boolean;
-  setIsAuthenticated: (isAuthenticated: boolean) => void;
   OTP: string;
   setOTP: (OTP: string) => void;
   isOTPVerified: boolean;
   setIsOTPVerified: (isOTPVerified: boolean) => void;
-  isEmailVerified: boolean;
-  setIsEmailVerified: (isEmailVerified: boolean) => void;
-  sendOTP: (userPhone: string) => void;
-  sendEmail: () => void;
-  verifyOTP: () => void;
-  verifyEmailVerification: (interval: NodeJS.Timeout) => void;
   userEmail: string | null;
   setUserEmail: (userEmail: string) => void;
   userPhone: string | null;
   setUserPhone: (userPhone: string) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+  sendOTP: (phone: string) => Promise<void>;
+  verifyOTP: () => Promise<void>;
   createUser: (
     email: string,
+    password: string,
     name: string,
-    profilePicture: string | undefined
-  ) => void;
-  user: User | null;
-  setUser: (user: User) => void;
+    profilePicture?: string
+  ) => Promise<void>;
+  sendEmail: () => Promise<void>;
+  verifyEmailVerification: (
+    interval: ReturnType<typeof setInterval>
+  ) => Promise<void>;
+  linkGoogleIdentity: () => Promise<void>;
 }
 
 type AuthNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const describeAuthError = (message: string): string => {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("invalid login")) return "Invalid email or password.";
+  if (normalized.includes("already registered")) return "That email is already in use.";
+  if (normalized.includes("rate limit")) return "Too many attempts. Please try again shortly.";
+  if (normalized.includes("expired")) return "That code has expired. Request a new one.";
+  if (normalized.includes("token")) return "That code is incorrect. Please try again.";
+  return message || "Something went wrong. Please try again.";
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigation = useNavigation<AuthNavigationProp>();
-
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [OTP, setOTP] = useState<string>("");
-  const [isOTPVerified, setIsOTPVerified] = useState<boolean>(false);
-  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [OTP, setOTP] = useState("");
+  const [isOTPVerified, setIsOTPVerified] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const recaptchaVerifier = useRef(null);
-
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem("userData");
-      await SecureStore.deleteItemAsync("userToken");
-      await setUser(null);
-      await setIsAuthenticated(false);
-      setError(null);
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      navigation.navigate("Login");
-    }
+  const applyProfile = (profile: Profile | null) => {
+    setUser(profile);
+    setUserEmail(profile?.email || null);
+    setUserPhone(profile?.phone || null);
+    // Phone OTP creates a session before profile/email onboarding is complete.
+    setIsAuthenticated(Boolean(profile?.onboardingCompleted));
   };
 
-  const login = async (userData: User, token: string) => {
+  const loadSession = async () => {
+    setLoading(true);
     try {
-      await auth.currentUser?.reload();
-
-      if (!auth.currentUser?.emailVerified) {
-        setError("Please verify your email before logging in.");
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!data.session) {
+        applyProfile(null);
         return;
       }
 
-      await AsyncStorage.setItem("userData", JSON.stringify(userData));
-      await SecureStore.setItemAsync("userToken", token);
-      setUser(userData);
-      setIsAuthenticated(true);
-      setError(null);
-
-      const userRef = doc(db, "users", userData.email || userData.phone || "");
-      const docSnap = await getDoc(userRef);
-
-      if (docSnap.exists()) {
-        const userFromFirestore = docSnap.data();
-        setUser({
-          ...userData,
-          firstName: userFromFirestore.name,
-          email: userFromFirestore.email,
-          phone: userFromFirestore.phoneNumber,
-          profilePicture: userFromFirestore.profilePicture,
+      let profile = await getProfile(data.session.user.id);
+      // Covers projects that were configured after a user was already created.
+      if (!profile) {
+        profile = await saveProfile({
+          id: data.session.user.id,
+          email: data.session.user.email || "",
+          phone: data.session.user.phone || "",
+          firstName: "",
+          lastName: "",
+          profilePicture: "",
+          onboardingCompleted: false,
         });
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Main" }],
-        });
-        navigation.navigate("Main");
-      } else console.log("No such document!");
-    } catch (error) {
-      console.error("Login error:", error);
-    }
-  };
-
-  const checkAuth = async () => {
-    setLoading(true);
-    try {
-      const token = await SecureStore.getItemAsync("userToken");
-      if (token) {
-        const storedUser = await AsyncStorage.getItem("userData");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-          setIsAuthenticated(true);
-          setError(null);
-          navigation.navigate("Main");
-        }
-      } else {
-        setIsAuthenticated(false);
-        navigation.navigate("Login");
       }
-    } catch (error) {
-      console.error("Error loading user data:", error);
+      applyProfile({
+        ...profile,
+        email: data.session.user.email || "",
+        phone: data.session.user.phone || "",
+      });
+      setError(null);
+    } catch (cause: any) {
+      console.error("Unable to restore Supabase session:", cause);
+      applyProfile(null);
+      setError(describeAuthError(cause?.message || ""));
     } finally {
       setLoading(false);
     }
   };
 
-  const sendOTP = async (phoneNumber: string) => {
-    try {
-      if (recaptchaVerifier.current) {
-        const phoneProvider = new PhoneAuthProvider(auth);
-        const verificationId = await phoneProvider.verifyPhoneNumber(
-          phoneNumber,
-          recaptchaVerifier.current
-        );
-        setVerificationId(verificationId);
-        setUserPhone(phoneNumber);
-        setError(null);
-        navigation.navigate("OTP");
-      }
-    } catch (error: any) {
-      console.log("Error sending OTP: ", error.message);
-      setError("Failed to send OTP. Please try again.");
-      navigation.navigate("PhoneNumber");
+  useEffect(() => {
+    loadSession();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      // Supabase holds an internal lock while dispatching this callback. Do not
+      // call auth/database APIs until after it has returned.
+      setTimeout(() => {
+        loadSession();
+      }, 0);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const logout = async () => {
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) {
+      setError(describeAuthError(signOutError.message));
+      return;
+    }
+    applyProfile(null);
+    setOTP("");
+    setIsOTPVerified(false);
+    setError(null);
+  };
+
+  const login = async (email: string, password: string) => {
+    setError(null);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError) {
+      setError(describeAuthError(signInError.message));
+      throw signInError;
     }
   };
 
-  const sendEmail = async () => {
-    if (auth.currentUser) await sendEmailVerification(auth.currentUser);
-  };
-  const verifyEmailVerification = async (interval: NodeJS.Timeout) => {
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified && user) {
-        const token = await auth.currentUser.getIdToken();
-        clearInterval(interval);
-        login(user, token);
-        navigation.navigate("SuccessEmail");
-      }
+  const sendOTP = async (phone: string) => {
+    setError(null);
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone,
+      options: { shouldCreateUser: true },
+    });
+    if (otpError) {
+      const message = describeAuthError(otpError.message);
+      setError(message);
+      throw otpError;
     }
+    setUserPhone(phone);
+    setOTP("");
+    navigation.navigate("OTP");
   };
 
   const verifyOTP = async () => {
-    if (verificationId) {
-      if (OTP.length !== 6) {
-        setError("Please enter full OTP.");
-        return;
-      } else {
-        try {
-          const credential = PhoneAuthProvider.credential(verificationId, OTP);
-          await signInWithCredential(auth, credential);
-          setIsOTPVerified(true);
-          setError(null);
-          setOTP("");
-          navigation.navigate("ProfileDetails");
-        } catch (error: any) {
-          setError("Incorrect OTP.");
-          console.log("Error verifying OTP:", error.message);
-        }
-      }
-    } else console.log("Missing verification ID. Please try again.");
+    if (!userPhone) {
+      setError("Enter your phone number and request a new code.");
+      return;
+    }
+    if (OTP.length !== 6) {
+      setError("Enter the complete six-digit code.");
+      return;
+    }
+    setError(null);
+    const { error: verificationError } = await supabase.auth.verifyOtp({
+      phone: userPhone,
+      token: OTP,
+      type: "sms",
+    });
+    if (verificationError) {
+      setError(describeAuthError(verificationError.message));
+      return;
+    }
+    setOTP("");
+    setIsOTPVerified(true);
+    navigation.navigate("ProfileDetails");
   };
 
   const createUser = async (
     email: string,
+    password: string,
     name: string,
-    profilePicture: string | undefined
+    profilePicture?: string
   ) => {
-    if (email && userPhone) {
-      setUserEmail(email);
-      try {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          userPhone
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (!authUser) {
+      setError("Verify your phone number before creating your profile.");
+      return;
+    }
+
+    setError(null);
+    const { error: updateError } = await supabase.auth.updateUser({
+      email,
+      password,
+    });
+    if (updateError) {
+      setError(describeAuthError(updateError.message));
+      return;
+    }
+
+    try {
+      const avatarUrl = profilePicture
+        ? await uploadProfileImage(authUser.id, profilePicture)
+        : user?.profilePicture || "";
+      const [firstName, ...remainingNames] = name.trim().split(/\s+/);
+      const profile = await saveProfile({
+        id: authUser.id,
+        email,
+        phone: authUser.phone || userPhone || "",
+        firstName: firstName || "",
+        lastName: remainingNames.join(" "),
+        profilePicture: avatarUrl,
+        onboardingCompleted: false,
+      });
+      applyProfile(profile);
+      navigation.navigate("VerifyingEmail");
+    } catch (cause: any) {
+      console.error("Unable to complete profile:", cause);
+      setError(describeAuthError(cause?.message || ""));
+    }
+  };
+
+  const sendEmail = async () => {
+    if (!userEmail) return;
+    const { error: resendError } = await supabase.auth.resend({
+      type: "email_change",
+      email: userEmail,
+    });
+    if (resendError) setError(describeAuthError(resendError.message));
+  };
+
+  const verifyEmailVerification = async (interval: ReturnType<typeof setInterval>) => {
+    const {
+      data: { user: authUser },
+      error: currentUserError,
+    } = await supabase.auth.getUser();
+    if (currentUserError || !authUser?.email_confirmed_at || !user) return;
+
+    const profile = await saveProfile({ ...user, onboardingCompleted: true });
+    applyProfile(profile);
+    clearInterval(interval);
+    navigation.reset({ index: 0, routes: [{ name: "Main" }] });
+  };
+
+  const linkGoogleIdentity = async () => {
+    if (!user) {
+      setError("Sign in before linking a Google account.");
+      return;
+    }
+
+    try {
+      const redirectTo = Linking.createURL("auth/callback");
+      const { data, error: linkError } = await supabase.auth.linkIdentity({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (linkError) throw linkError;
+      if (!data?.url) throw new Error("Google linking could not be started.");
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type === "success") {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(
+          result.url
         );
-        await sendEmail();
-        const token = await userCredential.user.getIdToken();
-        const userRef = collection(db, "users");
-
-        await addDoc(userRef, {
-          name,
-          email,
-          phoneNumber: userPhone,
-          profilePicture,
-        });
-
-        const userData: User = {
-          email: userCredential.user.email || "",
-          firstName: userCredential.user.displayName || "",
-          lastName: "",
-          phone: userCredential.user.phoneNumber || "",
-          profilePicture: profilePicture || "",
-        };
-
-        navigation.navigate("VerifyingEmail");
-        // await login(userData, token);
-        setError(null);
-      } catch (error) {
-        console.error("Failed to create user.", error);
+        if (exchangeError) throw exchangeError;
       }
+    } catch (cause: any) {
+      setError(describeAuthError(cause?.message || ""));
     }
   };
 
   return (
     <AuthContext.Provider
       value={{
+        error,
+        loading,
         isAuthenticated,
-        setIsAuthenticated,
         OTP,
         setOTP,
         isOTPVerified,
         setIsOTPVerified,
-        sendOTP,
-        verifyOTP,
         userEmail,
         setUserEmail,
-        sendEmail,
-        isEmailVerified,
-        setIsEmailVerified,
-        verifyEmailVerification,
         userPhone,
         setUserPhone,
         user,
         setUser,
-        checkAuth,
-        createUser,
-        loading,
-        error,
         login,
         logout,
+        checkAuth: loadSession,
+        sendOTP,
+        verifyOTP,
+        createUser,
+        sendEmail,
+        verifyEmailVerification,
+        linkGoogleIdentity,
       }}
     >
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={auth.app.options}
-      />
       {children}
     </AuthContext.Provider>
   );
@@ -282,8 +323,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within a AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };

@@ -3,6 +3,9 @@
 # dependencies
 node_modules/
 
+# agent workspace
+.sw-factory/
+
 # Expo
 .expo/
 dist/

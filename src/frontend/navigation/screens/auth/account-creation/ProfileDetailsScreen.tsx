@@ -2,7 +2,7 @@ import { ThemedText } from "@/src/frontend/components/common/ThemedText";
 import { ThemedView } from "@/src/frontend/components/common/ThemedView";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
 import ChevronLeftIcon from "react-native-vector-icons/FontAwesome6";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ThemedButton } from "@/src/frontend/components/common/ThemedButton";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -28,8 +28,9 @@ type PasswordRule =
 export default function ProfileDetailsScreen() {
   const navigation = useNavigation<ProfileDetailScreenNavigationProp>();
 
-  const { createUser } = useAuth();
+  const { createUser, error } = useAuth();
 
+  const [name, setName] = useState<string | undefined>();
   const [email, setEmail] = useState<string | undefined>();
   const [password, setPassword] = useState<string | undefined>();
   const [verifyPassword, setVerifyPassword] = useState<string>();
@@ -45,12 +46,12 @@ export default function ProfileDetailsScreen() {
   });
 
   const passwordError = Object.values(passwordChecklist).some(
-    (value) => value === true
+    (value) => value === false
   );
 
   const createAccount = () => {
-    if (!passwordMatchError && !passwordError && email) {
-      createUser(email, "test", image ? image[0] : "");
+    if (!passwordMatchError && !passwordError && email && password && name) {
+      createUser(email, password, name, image ? image[0] : "");
     }
   };
 
@@ -86,6 +87,17 @@ export default function ProfileDetailsScreen() {
     setVerifyPassword(value);
     if (value !== password) setPasswordMatchError(true);
     else setPasswordMatchError(false);
+  };
+
+  const validatePassword = (value: string) => {
+    setPassword(value);
+    setPasswordChecklist({
+      "At least 8 characters": value.length >= 8,
+      "At least one number or symbol": /[0-9\W_]/.test(value),
+      "One lowercase character": /[a-z]/.test(value),
+      "One uppercase character": /[A-Z]/.test(value),
+    });
+    if (verifyPassword) setPasswordMatchError(verifyPassword !== value);
   };
 
   return (
@@ -133,6 +145,16 @@ export default function ProfileDetailsScreen() {
 
         <View className="text-boxes flex flex-col gap-4 w-full">
           <View className="username-container flex flex-col w-full gap-1">
+            <ThemedText type="default">Name</ThemedText>
+            <TextEntry
+              className="w-full"
+              value={name}
+              setValue={setName}
+              placeholder="Your name"
+              textContentType="name"
+            />
+          </View>
+          <View className="username-container flex flex-col w-full gap-1">
             <ThemedText type="default">Email</ThemedText>
             <TextEntry
               className="email-text w-full"
@@ -149,7 +171,7 @@ export default function ProfileDetailsScreen() {
               className="password-text w-full"
               value={password}
               placeholder=""
-              setValue={setPassword}
+              setValue={(value) => validatePassword(value || "")}
               textContentType="password"
               keyboardType="visible-password"
             />
@@ -203,6 +225,11 @@ export default function ProfileDetailsScreen() {
           >
             Next
           </ThemedButton>
+          {error && (
+            <ThemedText type="description" style={{ color: Colours.constant.danger }}>
+              {error}
+            </ThemedText>
+          )}
         </View>
       </View>
     </ThemedView>
