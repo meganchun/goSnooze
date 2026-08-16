@@ -28,9 +28,7 @@ import {
   setActiveAlarmTarget,
 } from "../../../services/notificationService";
 import { useAuth } from "../../../context/AuthContext";
-
-// Distance from the target stop at which we wake the rider (in km).
-const ARRIVAL_RADIUS_KM = 0.5;
+import { DEFAULT_ARRIVAL_RADIUS_KM } from "../../../constants/alarm";
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -155,7 +153,7 @@ export default function HomeScreen({
         }
       );
 
-      if (distanceKm < ARRIVAL_RADIUS_KM) {
+      if (distanceKm < DEFAULT_ARRIVAL_RADIUS_KM) {
         // Idempotent inside the service, so repeated location updates
         // won't stack buzzes.
         triggerArrivalAlert(activeStation.StopName);

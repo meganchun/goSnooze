@@ -6,6 +6,7 @@ import {
   getActiveAlarmTarget,
   triggerArrivalAlert,
 } from "../services/notificationService";
+import { DEFAULT_ARRIVAL_RADIUS_KM } from "../constants/alarm";
 
 interface LocationContextType {
   location: Location.LocationObject | null;
@@ -13,9 +14,6 @@ interface LocationContextType {
 }
 
 const LOCATION_TASK_NAME = "background-location-task";
-
-// Distance from the armed stop at which we wake the rider (in km).
-const ARRIVAL_RADIUS_KM = 0.5;
 
 // Define background location tracking task. This runs even when the app is
 // backgrounded, so it — not the React component — is what wakes a napping rider.
@@ -42,7 +40,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     { latitude: target.latitude, longitude: target.longitude }
   );
 
-  if (distanceKm < ARRIVAL_RADIUS_KM) {
+  if (distanceKm < DEFAULT_ARRIVAL_RADIUS_KM) {
     await triggerArrivalAlert(target.stopName);
   }
 });
