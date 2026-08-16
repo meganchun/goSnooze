@@ -21,6 +21,15 @@ import {
 import { useLocation } from "../../../context/LocationContext";
 import { calculateDistance } from "../../../services/distanceService";
 import ToggleSwitch from "../../../components/homepage/ToggleSwitch";
+import {
+  requestNotificationPermissions,
+  triggerArrivalAlert,
+  stopArrivalAlert,
+  setActiveAlarmTarget,
+} from "../../../services/notificationService";
+
+// Distance from the target stop at which we wake the rider (in km).
+const ARRIVAL_RADIUS_KM = 0.5;
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -59,6 +68,11 @@ export default function HomeScreen({
 
   const { location, error } = useLocation();
 
+  // Ask for notification permission once, up front.
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
+
   const tempUser = {
     name: "Megan",
     number: "",
@@ -67,6 +81,8 @@ export default function HomeScreen({
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
   const mapRef = useRef<MapView>(null);
+  // Auto-center on the rider only once, so continuous updates don't yank the map.
+  const hasCenteredRef = useRef(false);
 
   // Animation to markers
   useEffect(() => {
@@ -117,7 +133,8 @@ export default function HomeScreen({
 
   // Animate to users location
   useEffect(() => {
-    if (location && mapRef.current) {
+    if (location && mapRef.current && !hasCenteredRef.current) {
+      hasCenteredRef.current = true;
       const region = {
         latitude: location?.coords.latitude,
         longitude: location?.coords.longitude,
@@ -127,25 +144,26 @@ export default function HomeScreen({
 
       mapRef.current.animateToRegion(region, 500);
     }
-    // If the user set a location stop
+    // If the user set a location stop, alert them once they're close enough.
     if (alarmOn && location && activeStation) {
-      // Check if it enters within a 5km radius
-      if (
-        calculateDistance(
-          {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          },
-          {
-            longitude: activeStation.Longitude,
-            latitude: activeStation.Latitude,
-          }
-        ) < 5
-      ) {
-        console.log(true);
+      const distanceKm = calculateDistance(
+        {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        },
+        {
+          longitude: activeStation.Longitude,
+          latitude: activeStation.Latitude,
+        }
+      );
+
+      if (distanceKm < ARRIVAL_RADIUS_KM) {
+        // Idempotent inside the service, so repeated location updates
+        // won't stack buzzes.
+        triggerArrivalAlert(activeStation.StopName);
       }
     }
-  }, [location]);
+  }, [location, alarmOn, activeStation]);
 
   const interpolations = markers.map((marker, index) => {
     const inputRange = [
@@ -212,10 +230,20 @@ export default function HomeScreen({
   }, [stopCodes]);
 
   const cancelAlarm = () => {
+    stopArrivalAlert();
+    setActiveAlarmTarget(null);
     setAlarmOn(!alarmOn);
   };
 
   const handleNotify = (stop: Stop) => {
+    // Clear any in-flight buzz before arming a new stop.
+    stopArrivalAlert();
+    // Persist the target so the background task can alert while napping.
+    setActiveAlarmTarget({
+      stopName: stop.StopName,
+      latitude: stop.Latitude,
+      longitude: stop.Longitude,
+    });
     setActiveStation(stop);
     setAlarmOn(true);
   };

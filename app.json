@@ -17,10 +17,13 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow GoSnooze to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow GoSnooze to use your location.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications"
     ],
     "ios": {
       "buildNumber": "1.0.0",
@@ -30,7 +33,9 @@
       "deploymentTarget": "13.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need access to your location to provide live tracking.",
-        "NSLocationAlwaysUsageDescription": "We need access to your location even when the app is in the background."
+        "NSLocationAlwaysUsageDescription": "We need access to your location even when the app is in the background.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We track your location in the background so we can wake you when you're approaching your stop.",
+        "UIBackgroundModes": ["location", "fetch"]
       }
     },
     "android": {
