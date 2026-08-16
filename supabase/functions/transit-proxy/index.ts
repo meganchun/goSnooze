@@ -7,11 +7,19 @@ type TransitRequest = {
   stopCode?: string;
 };
 
-const required = (name: string): string => {
-  const value = Deno.env.get(name);
-  if (!value) throw new Error(`Missing ${name} function secret.`);
-  return value;
+// Public Metrolinx / GO Open Data API endpoints. These are not secrets — they
+// are the same published paths for every consumer — so they live in code.
+// Verify against https://api.openmetrolinx.com if the API changes.
+const BASE_URL = "https://api.openmetrolinx.com/OpenDataAPI";
+const PATHS = {
+  trainLines: "/api/V1/Schedule/Line/All/",
+  lineStops: "/api/V1/Schedule/Line/Stop/",
+  stopInfo: "/api/V1/Stop/Details",
+  serviceAlerts: "/api/V1/ServiceUpdate/ServiceAlert/All",
 };
+
+// The API key is the only real secret. Store it raw (no "?key=" prefix).
+const apiKey = Deno.env.get("GO_TRANSIT_API_KEY");
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -21,42 +29,36 @@ const json = (body: unknown, status = 200) =>
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!apiKey) return json({ error: "Missing GO_TRANSIT_API_KEY secret." }, 500);
 
   try {
     const input = (await request.json()) as TransitRequest;
-    const baseUrl = required("GO_TRANSIT_API_BASE_URL").replace(/\/$/, "");
-    const apiKey = required("GO_TRANSIT_API_KEY");
     const today = new Date().toISOString().slice(0, 10).replaceAll("-", "");
-    const paths = {
-      trainLines: required("GO_TRANSIT_TRAIN_LINES"),
-      lineStops: required("GO_TRANSIT_LINE_STOPS"),
-      stopInfo: required("GO_TRANSIT_STOP_INFO"),
-      serviceAlerts: required("GO_TRANSIT_SERVICE_ALERTS"),
-    };
+    const key = `?key=${apiKey}`;
 
     let endpoint: string;
     switch (input.operation) {
       case "lines":
-        endpoint = `${paths.trainLines}${today}${apiKey}`;
+        endpoint = `${PATHS.trainLines}${today}${key}`;
         break;
       case "lineStops":
         if (!input.lineCode || !input.direction) {
           return json({ error: "lineCode and direction are required" }, 400);
         }
-        endpoint = `${paths.lineStops}${today}/${encodeURIComponent(input.lineCode)}/${encodeURIComponent(input.direction)}${apiKey}`;
+        endpoint = `${PATHS.lineStops}${today}/${encodeURIComponent(input.lineCode)}/${encodeURIComponent(input.direction)}${key}`;
         break;
       case "stopInfo":
         if (!input.stopCode) return json({ error: "stopCode is required" }, 400);
-        endpoint = `${paths.stopInfo}/${encodeURIComponent(input.stopCode)}${apiKey}`;
+        endpoint = `${PATHS.stopInfo}/${encodeURIComponent(input.stopCode)}${key}`;
         break;
       case "serviceAlerts":
-        endpoint = `${paths.serviceAlerts}${apiKey}`;
+        endpoint = `${PATHS.serviceAlerts}${key}`;
         break;
       default:
         return json({ error: "Unsupported transit operation" }, 400);
     }
 
-    const response = await fetch(`${baseUrl}${endpoint}`, {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
       headers: { Accept: "application/json" },
     });
     const body = await response.text();

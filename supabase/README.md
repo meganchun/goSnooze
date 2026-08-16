@@ -30,10 +30,11 @@ Use the **publishable** (anon) key only. Never put a service-role key in the app
   secrets, never in the app.
 
 ### 4. Deploy the transit proxy (keeps the GO Transit key server-side)
+The Metrolinx API paths are public constants baked into the function, so the
+only secret you set is your Open Data API key (from developer.openmetrolinx.com),
+stored raw with no `?key=` prefix:
 ```sh
-supabase secrets set GO_TRANSIT_API_BASE_URL=... GO_TRANSIT_API_KEY=... \
-  GO_TRANSIT_TRAIN_LINES=... GO_TRANSIT_LINE_STOPS=... \
-  GO_TRANSIT_STOP_INFO=... GO_TRANSIT_SERVICE_ALERTS=...
+supabase secrets set GO_TRANSIT_API_KEY='your-metrolinx-key'
 supabase functions deploy transit-proxy
 ```
 
