@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Image, TouchableOpacity, Text } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
 import { ThemedView } from "../../../components/common/ThemedView";
 import { ThemedText } from "../../../components/common/ThemedText";
 import TextEntry from "@/src/frontend/components/common/TextEntry";
@@ -17,7 +18,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState<string | undefined>();
   const [password, setPassword] = useState<string | undefined>();
-  const { login } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const [error, setError] = useState(false);
 
   const handleForgotPassword = () => {
@@ -31,6 +32,15 @@ export default function LoginScreen() {
     } catch (error: any) {
       setError(true);
       console.log("Login failed:", error.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      setError(true);
+      console.log("Google sign-in failed:", error?.message);
     }
   };
 
@@ -85,6 +95,20 @@ export default function LoginScreen() {
           <ThemedButton type="primary" bold onPress={handleLogin}>
             Continue
           </ThemedButton>
+
+          <View className="flex-row items-center gap-3">
+            <View className="flex-1 h-px bg-[#D9D9D9]" />
+            <ThemedText type="description">or</ThemedText>
+            <View className="flex-1 h-px bg-[#D9D9D9]" />
+          </View>
+
+          <TouchableOpacity
+            onPress={handleGoogleSignIn}
+            className="flex-row items-center justify-center gap-3 w-full py-3 rounded-lg border border-[#D9D9D9]"
+          >
+            <Icon name="google" size={18} color="#DB4437" />
+            <ThemedText type="defaultBold">Continue with Google</ThemedText>
+          </TouchableOpacity>
         </View>
       </View>
     </ThemedView>

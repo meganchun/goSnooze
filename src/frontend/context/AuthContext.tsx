@@ -43,6 +43,7 @@ interface AuthContextType {
   verifyEmailVerification: (
     interval: ReturnType<typeof setInterval>
   ) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   linkGoogleIdentity: () => Promise<void>;
 }
 
@@ -80,16 +81,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       let profile = await getProfile(data.session.user.id);
-      // Covers projects that were configured after a user was already created.
+      // Covers projects that were configured after a user was already created,
+      // and first-time Google sign-ins (which arrive with a verified email + name).
       if (!profile) {
+        const authUser = data.session.user;
+        const isGoogle = authUser.app_metadata?.provider === "google";
+        const meta = authUser.user_metadata ?? {};
+        const fullName = String(meta.full_name ?? meta.name ?? "").trim();
+        const [firstName, ...rest] = fullName ? fullName.split(/\s+/) : [""];
         profile = await saveProfile({
-          id: data.session.user.id,
-          email: data.session.user.email || "",
-          phone: data.session.user.phone || "",
-          firstName: "",
-          lastName: "",
-          profilePicture: "",
-          onboardingCompleted: false,
+          id: authUser.id,
+          email: authUser.email || "",
+          phone: authUser.phone || "",
+          firstName: firstName || "",
+          lastName: rest.join(" "),
+          profilePicture: String(meta.avatar_url ?? meta.picture ?? ""),
+          // Google accounts need no email verification, so onboarding is done.
+          onboardingCompleted: isGoogle,
         });
       }
       applyProfile({
@@ -253,6 +261,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     navigation.reset({ index: 0, routes: [{ name: "Main" }] });
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    try {
+      const redirectTo = Linking.createURL("auth/callback");
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (oauthError) throw oauthError;
+      if (!data?.url) throw new Error("Google sign-in could not be started.");
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type === "success") {
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(result.url);
+        if (exchangeError) throw exchangeError;
+        // onAuthStateChange -> loadSession picks up the session and profile.
+      }
+    } catch (cause: any) {
+      setError(describeError(cause?.message || ""));
+      throw cause;
+    }
+  };
+
   const linkGoogleIdentity = async () => {
     if (!user) {
       setError("Sign in before linking a Google account.");
@@ -304,6 +336,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         createUser,
         sendEmail,
         verifyEmailVerification,
+        signInWithGoogle,
         linkGoogleIdentity,
       }}
     >
