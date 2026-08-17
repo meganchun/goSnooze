@@ -1,6 +1,4 @@
-import { Platform, Vibration } from "react-native";
 import * as Notifications from "expo-notifications";
-import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DEFAULT_ARRIVAL_RADIUS_KM } from "../constants/alarm";
 
@@ -91,16 +89,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// A repeating buzz pattern meant to wake a napping rider.
-// On iOS the individual durations are ignored (the OS uses a fixed pulse),
-// but the pattern length and `repeat` flag still drive repeated buzzing.
-const ALARM_VIBRATION_PATTERN = [0, 600, 400, 600, 400, 600];
-
-let alertActive = false;
-
 /**
  * Ask the OS for permission to post local notifications.
  * Safe to call more than once. Returns true if granted.
+ *
+ * The actual "you're approaching your stop" alerting lives in
+ * services/alarm/escalationService (buzz -> escalate).
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync();
@@ -118,46 +112,4 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   }
 
   return status === "granted";
-}
-
-/**
- * Fire the "you're approaching your stop" alert: a local notification
- * (sound + banner, works in the background) plus a physical buzz.
- * Idempotent while an alert is already active so we don't stack buzzes.
- */
-export async function triggerArrivalAlert(stationName: string): Promise<void> {
-  if (alertActive) return;
-  alertActive = true;
-
-  const prefs = await getCachedAlertPreferences();
-
-  // Physical buzz (honors the buzz preference).
-  if (prefs.buzzEnabled) {
-    Vibration.vibrate(ALARM_VIBRATION_PATTERN, true);
-    if (Platform.OS === "ios") {
-      // Extra strong haptic tap on top of the vibration.
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
-        () => {}
-      );
-    }
-  }
-
-  // Local notification — no server required.
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "Almost there! 🚉",
-      body: `You're approaching ${stationName}. Time to wake up!`,
-      sound: prefs.soundEnabled,
-      priority: Notifications.AndroidNotificationPriority.MAX,
-    },
-    trigger: null, // deliver immediately
-  });
-}
-
-/**
- * Stop the buzz and reset so a future approach can alert again.
- */
-export function stopArrivalAlert(): void {
-  Vibration.cancel();
-  alertActive = false;
 }

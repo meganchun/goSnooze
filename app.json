@@ -35,6 +35,7 @@
         "NSLocationWhenInUseUsageDescription": "We need access to your location to provide live tracking.",
         "NSLocationAlwaysUsageDescription": "We need access to your location even when the app is in the background.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We track your location in the background so we can wake you when you're approaching your stop.",
+        "NSAlarmKitUsageDescription": "goSnooze uses alarms to make sure you wake up before your stop.",
         "UIBackgroundModes": ["location", "fetch"]
       }
     },

@@ -72,6 +72,20 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
       `registerErrorRule`) with the `useErrorHandler` hook used by screens and
       contexts.
 
+## Alarm escalation (buzz → loud alarm)
+
+- [x] Two-stage escalation infrastructure: gentle buzz + heads-up notification,
+      then escalate to a loud alarm if not dismissed. Pluggable backend
+      (`services/alarm/`, see `docs/alarm-escalation.md`).
+- [x] Notification fallback backend (works today; loud notification burst +
+      vibration).
+- [x] AlarmKit backend for iOS 26+ (`expo-alarm-kit`) — real system alarm that
+      breaks through silent/Focus. Code + `NSAlarmKitUsageDescription` in place.
+- [ ] Enable AlarmKit natively at dev-build time: deployment target 26, App
+      Group, then verify on an iOS 26 device (decision: dropping iOS < 26).
+- [ ] Precise background escalation (schedule AlarmKit for the ETA instead of a
+      JS grace timer) and dismiss-from-notification for the fallback path.
+
 ## P3 — Optional server-sent alerts
 
 - [ ] Set up APNs credentials, device token registration (`push_tokens`), and a

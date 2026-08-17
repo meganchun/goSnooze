@@ -4,9 +4,9 @@ import * as TaskManager from "expo-task-manager";
 import { calculateDistance } from "../services/distanceService";
 import {
   getActiveAlarmTarget,
-  triggerArrivalAlert,
   getEffectiveRadiusKm,
 } from "../services/notificationService";
+import { triggerArrivalAlert } from "../services/alarm/escalationService";
 
 interface LocationContextType {
   location: Location.LocationObject | null;

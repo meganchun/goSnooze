@@ -26,11 +26,14 @@ import {
 import ToggleSwitch from "../../../components/homepage/ToggleSwitch";
 import {
   requestNotificationPermissions,
-  triggerArrivalAlert,
-  stopArrivalAlert,
   setActiveAlarmTarget,
   getEffectiveRadiusKm,
 } from "../../../services/notificationService";
+import {
+  triggerArrivalAlert,
+  stopArrivalAlert,
+  prepareEscalation,
+} from "../../../services/alarm/escalationService";
 import {
   saveActiveAlarm,
   clearActiveAlarm,
@@ -79,9 +82,11 @@ export default function HomeScreen({
   // Saved wake-up radius (km); defaults until the preference loads.
   const [radiusKm, setRadiusKm] = useState(DEFAULT_ARRIVAL_RADIUS_KM);
 
-  // Ask for notification permission and load the saved radius, up front.
+  // Ask for notification permission, prime the alarm escalator, and load the
+  // saved radius, up front.
   useEffect(() => {
     requestNotificationPermissions();
+    prepareEscalation();
     getEffectiveRadiusKm().then(setRadiusKm);
   }, []);
 
