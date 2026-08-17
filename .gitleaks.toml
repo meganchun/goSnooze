@@ -1,0 +1,20 @@
+title = "goSnooze gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholders, lockfiles, and known-safe client config"
+paths = [
+  '''\.env\.example''',
+  '''package-lock\.json''',
+]
+regexes = [
+  # .env.example / docs placeholders
+  '''sb_publishable_your_key''',
+  '''your-project-ref''',
+  '''your-metrolinx-key''',
+  # Firebase web API key from the pre-Supabase code (public-safe client config;
+  # the Firebase project is being decommissioned). Lives only in git history.
+  '''AIzaSyDpPumdjePYXL2DZ_a-Dog5Ae22AN1KXQA''',
+]

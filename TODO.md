@@ -30,10 +30,11 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
 - [ ] Require existing users to reverify their phone number during cutover; do
       not attempt to carry Firebase sessions forward.
 - [~] Verify the migrated app on iOS and Android, then finish removing dead
-      code and obsolete dependencies. (Firebase/Prisma/Apollo/GraphQL files and
-      deps removed; `react-native-auth0` removed; `expo-web-browser`/
-      `expo-file-system` pinned to SDK-52 versions. Still needs on-device
-      verification; the app cannot boot until the Supabase env vars are set.)
+      code and obsolete dependencies. (Removed: Firebase/Prisma/Apollo/GraphQL,
+      react-native-auth0, scoped @react-native-vector-icons/*, community
+      checkbox, react-native-webview, jscodeshift; pinned expo-web-browser/
+      expo-file-system to SDK-52. iOS + web JS bundles verified via
+      `expo export`. Still needs on-device runtime verification.)
 
 ## P1 — Authentication and OTP correctness
 
@@ -55,8 +56,12 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
       on-device verification.
 - [x] Replace the fabricated alarm ETA in `AlarmCard` with an estimate from the
       remaining distance (`estimateArrival`). Greeting reads from the user.
-- [ ] Add secrets scanning and verify data-access (RLS) policies against the
-      live project.
+- [x] Add secrets scanning: gitleaks CI workflow (`.github/workflows/
+      secret-scan.yml` + `.gitleaks.toml`) and a dependency-free local scanner
+      (`npm run scan:secrets`). Repo currently clean.
+- [~] Verify data-access (RLS) policies: `scripts/test-rls.mjs` signs in as two
+      accounts and asserts cross-user reads/writes are blocked. Run it with two
+      confirmed test users against the live project.
 
 ## Architecture
 
