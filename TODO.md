@@ -83,10 +83,16 @@ Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
       breaks through silent/Focus. Code + `NSAlarmKitUsageDescription` in place.
 - [ ] Enable AlarmKit natively at dev-build time: deployment target 26, App
       Group, then verify on an iOS 26 device (decision: dropping iOS < 26).
-- [ ] Precise background escalation (schedule AlarmKit for the ETA instead of a
-      JS grace timer) and dismiss-from-notification for the fallback path.
+- [x] Dismiss-from-notification: an "I'm awake" action + response listener
+      (`App.tsx`) stops the fallback alarm from the lock screen.
+- [ ] Precise background escalation: schedule AlarmKit for the ETA instead of a
+      JS grace timer.
 
 ## P3 — Optional server-sent alerts
 
-- [ ] Set up APNs credentials, device token registration (`push_tokens`), and a
-      trusted push sender after the Supabase migration is stable.
+- [x] Device token registration: `pushService.registerPushToken` saves the Expo
+      push token to `push_tokens` (called from HomeScreen once signed in).
+- [x] Trusted push sender: `supabase/functions/send-push` sends via the Expo
+      Push API using the service role, gated by an `x-push-secret` header.
+- [ ] Set up APNs credentials + `eas init` (adds the projectId push tokens need),
+      then deploy send-push with `PUSH_SEND_SECRET` and verify end-to-end.

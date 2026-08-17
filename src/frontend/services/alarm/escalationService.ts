@@ -1,7 +1,10 @@
 import { Platform, Vibration } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
-import { AlarmEscalator } from "./escalator";
+import {
+  AlarmEscalator,
+  ARRIVAL_NOTIFICATION_CATEGORY,
+} from "./escalator";
 import { alarmKitEscalator } from "./alarmKitEscalator";
 import { notificationEscalator } from "./notificationEscalator";
 import { getCachedAlertPreferences } from "../notificationService";
@@ -36,9 +39,38 @@ export function getEscalatorKind(): "alarmkit" | "notifications" {
   return alarmKitEscalator.isSupported() ? "alarmkit" : "notifications";
 }
 
-/** One-time setup (AlarmKit authorization/config). Call at app start. */
+/** One-time setup (AlarmKit auth + the "I'm awake" notification action). */
 export async function prepareEscalation(): Promise<void> {
+  await registerAlarmNotificationCategory();
   await escalator.prepare();
+}
+
+/** Register the notification category that carries the "I'm awake" button. */
+export async function registerAlarmNotificationCategory(): Promise<void> {
+  await Notifications.setNotificationCategoryAsync(ARRIVAL_NOTIFICATION_CATEGORY, [
+    {
+      identifier: "dismiss",
+      buttonTitle: "I'm awake",
+      options: { opensAppToForeground: false },
+    },
+  ]);
+}
+
+/**
+ * Handle a tap or action on an arrival-alarm notification: any interaction
+ * means "I'm awake", so dismiss the escalation. Wire this to
+ * Notifications.addNotificationResponseReceivedListener at app start.
+ */
+export async function handleNotificationResponse(
+  response: Notifications.NotificationResponse
+): Promise<void> {
+  // content is a platform union; only iOS carries categoryIdentifier.
+  const content = response.notification.request.content as {
+    categoryIdentifier?: string | null;
+  };
+  if (content.categoryIdentifier === ARRIVAL_NOTIFICATION_CATEGORY) {
+    await dismissEscalation();
+  }
 }
 
 /**
@@ -68,6 +100,7 @@ export async function beginEscalation(
       title: "Almost there 🚉",
       body: `Approaching ${label}. Tap to confirm you're awake.`,
       sound: prefs.soundEnabled,
+      categoryIdentifier: ARRIVAL_NOTIFICATION_CATEGORY,
     },
     trigger: null,
   });

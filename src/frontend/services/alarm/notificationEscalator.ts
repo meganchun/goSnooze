@@ -1,6 +1,6 @@
 import { Vibration } from "react-native";
 import * as Notifications from "expo-notifications";
-import { AlarmEscalator } from "./escalator";
+import { AlarmEscalator, ARRIVAL_NOTIFICATION_CATEGORY } from "./escalator";
 
 // Fallback loud alarm for anything without AlarmKit (iOS < 26, Android, Expo Go).
 // iOS caps a single notification sound at ~30s and won't loop it, and can't
@@ -32,6 +32,7 @@ export const notificationEscalator: AlarmEscalator = {
           body: `You're arriving at ${label} — tap to stop.`,
           sound: true,
           priority: Notifications.AndroidNotificationPriority.MAX,
+          categoryIdentifier: ARRIVAL_NOTIFICATION_CATEGORY,
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

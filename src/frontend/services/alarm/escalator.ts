@@ -9,6 +9,12 @@
 //
 // escalationService picks the best supported one at runtime.
 
+// Notification category + action for the "I'm awake" button. Defined here (a
+// dependency-free module) so both escalationService and notificationEscalator
+// can attach it to their notifications without importing each other.
+export const ARRIVAL_NOTIFICATION_CATEGORY = "arrival-alarm";
+export const DISMISS_ACTION_ID = "dismiss";
+
 export interface AlarmEscalator {
   /** Whether this escalator's loud alarm can actually run on this device. */
   isSupported(): boolean;

@@ -34,6 +34,7 @@ import {
   stopArrivalAlert,
   prepareEscalation,
 } from "../../../services/alarm/escalationService";
+import { registerPushToken } from "../../../services/pushService";
 import {
   saveActiveAlarm,
   clearActiveAlarm,
@@ -92,6 +93,11 @@ export default function HomeScreen({
 
   const { user } = useAuth();
   const { run: runSafely } = useErrorHandler();
+
+  // Save this device's push token once we know who the user is.
+  useEffect(() => {
+    if (user?.id) registerPushToken(user.id);
+  }, [user?.id]);
 
   // Listener to handle map animations
   const mapAnimation = useRef(new Animated.Value(0));
