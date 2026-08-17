@@ -9,11 +9,12 @@ verifiable (needs the live Supabase project and/or on-device testing).
 Move the app to Supabase before further Firebase feature work, using Supabase
 Auth, Postgres, Row Level Security (RLS), Storage, and Edge Functions.
 
-- [ ] Create the Supabase project and configure Auth providers: phone OTP,
-      email/password, and Google. (Dashboard config — code already supports all
-      three.)
-- [ ] Configure an SMS provider in Supabase Auth with rate limiting, OTP expiry,
-      and CAPTCHA. Keep all provider credentials server-side. (Dashboard config.)
+- [x] Create the Supabase project and configure Auth providers: email/password,
+      phone OTP (via Twilio Verify — no number to buy), and Google. Configured
+      in the dashboard; on-device sign-in verification still pending.
+- [x] SMS provider configured via Twilio Verify. Confirm OTP length (6) /
+      expiry / SMS rate limits are set; CAPTCHA intentionally off until the app
+      sends a captchaToken.
 - [x] Data-model migration for `profiles`, `alert_preferences`,
       `active_alarms`, and `push_tokens`, all keyed by `auth.users.id`.
 - [x] Owner-only RLS policies for every user-owned table and Storage bucket.
